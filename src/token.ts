@@ -1,5 +1,5 @@
 export enum ValidToken {
-  DECIMAL_DIGIT = "DECIMAL_DIGIT",
+  DECIMAL_LITERAL = "DECIMAL_DIGIT",
   EOF = "EOF",
   DOT = "DOT",
   PLUS = "PLUS",
@@ -25,7 +25,7 @@ export default class Token {
     return this._value;
   }
 
-  print() {
+  toString() {
     console.log(`${this._type} : ${this._value}`);
   }
 }

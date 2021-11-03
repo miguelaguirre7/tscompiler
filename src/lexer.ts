@@ -1,23 +1,27 @@
 import Token, { ValidToken } from "./token";
 
 export default class Lexer {
-  private input: string;
+  private _input: string;
   private currentChar: string;
   private currentIndex: number;
 
   constructor(input: string) {
-    this.input = input;
+    this._input = input;
     this.currentIndex = 0;
-    this.currentChar = this.input[this.currentIndex];
+    this.currentChar = this._input[this.currentIndex];
   }
 
-  getNextToken() {
+  set input(newInput: string) {
+    this._input = newInput;
+  }
+
+  nextToken() {
     while (this.currentChar) {
       if (this.currentChar.match(/\s/)) {
         this.advance();
         continue;
       } else if (this.currentChar.match(/[\d\.]/)) {
-        return new Token(ValidToken.DECIMAL_DIGIT, this.decimalLiteral());
+        return new Token(ValidToken.DECIMAL_LITERAL, this.decimalLiteral());
       } else if (this.currentChar.match(/["']/)) {
         return this.string();
       } else if (this.currentChar.match(/[a-zA-Z]/)) {
@@ -31,7 +35,7 @@ export default class Lexer {
   }
 
   private advance() {
-    this.currentChar = this.input[++this.currentIndex];
+    this.currentChar = this._input[++this.currentIndex];
   }
 
   private word() {
@@ -51,54 +55,80 @@ export default class Lexer {
 
   private string() {
     let strToken = "";
+    const validStringRegex = /^("[^"]*[^\\]"|""|''|'[^']*[^\\]')$/;
 
-    while (!strToken.match(/("[^"]*[^\\]"|'[^']*[^\\]')/)) {
+    while (this.currentChar && !strToken.match(validStringRegex)) {
       strToken += this.currentChar;
       this.advance();
-      if (this.currentChar === undefined)
-        throw new SyntaxError("Invalid token");
     }
 
+    if (!validStringRegex.test(strToken))
+      throw new SyntaxError("Invalid token");
+
     return new Token(ValidToken.STRING_LITERAL, strToken);
+  }
+
+  private decimalDigits() {
+    let digits = "";
+
+    while (this.currentChar && this.currentChar.match(/[\d_]/)) {
+      digits += this.currentChar;
+      this.advance();
+    }
+
+    if (digits[digits.length - 1] === "_")
+      throw new SyntaxError(
+        "Numeric separators are not allowed at the end of numeric literals"
+      );
+
+    return digits;
   }
 
   private decimalLiteral() {
     let number = this.decimalIntegerLiteral();
 
-    if (number.indexOf(".") !== -1) {
-      let literals = number.split(".");
-      if (literals.length !== 2) throw new SyntaxError("Unexpected number");
+    if (this.currentChar === ".") {
+      number += this.currentChar;
+      this.advance();
+      if (!this.isNum(this.currentChar)) {
+        if (number.length === 0 || (this.currentChar as string) === "_")
+          throw new SyntaxError("Unexpected token");
 
-      if (literals[0] === "") return "." + literals[1];
-      if (literals[1] === "") return literals[0];
-
-      const validNumLiteral = /^[\d_]+\d?$/;
-
-      for (let i = 0; i < literals.length; i++) {
-        if (literals[i].endsWith("_"))
-          throw new SyntaxError(
-            "Numeric separators are not allowed at the end of numeric literals"
-          );
-        if (!literals[i].match(validNumLiteral)) {
-          throw new SyntaxError("Invalid or unexpected token");
-        }
-
-        literals[i] = literals[i].replace(/_/g, "");
+        return number;
       }
 
-      return literals.join(".");
+      number += this.decimalDigits();
     }
 
-    return number.replace(/_/g, "");
+    return number;
   }
 
   private decimalIntegerLiteral() {
     let int = "";
-    while (this.currentChar && this.currentChar.match(/[\d_\.]/)) {
+
+    while (this.currentChar && this.currentChar.match(/[\d_]/)) {
       int += this.currentChar;
       this.advance();
     }
 
+    if (int.match(/^0\d+$/)) throw new SyntaxError("Invalid token");
+
+    if (int[int.length - 1] === "_")
+      throw new SyntaxError(
+        "Numeric separators are not allowed at the end of numeric literals"
+      );
+
     return int;
+  }
+
+  reset(newInput?: string) {
+    if (newInput) this._input = newInput;
+
+    this.currentIndex = 0;
+    this.currentChar = this._input[0];
+  }
+
+  private isNum(str: string) {
+    return /\d/.test(str);
   }
 }
