@@ -1,0 +1,32 @@
+{
+  "plugins": [
+    "jest"
+  ],
+  "extends": [
+    "plugin:jest/recommended"
+  ],
+  "ignores": [
+    "*.js",
+    "jest.config.ts",
+    "build/**/*"
+  ],
+  "overrides": [
+    {
+      "files": "test/*.ts",
+      "rules": {
+        "max-nested-callbacks": "off"
+      }
+    }
+  ],
+  "rules": {
+    "import/extensions": [
+      "off",
+      "never"
+    ],
+    "@typescript-eslint/object-curly-spacing": [
+      "error",
+      "always"
+    ],
+    "curly": "off"
+  }
+}

@@ -1,0 +1,108 @@
+(* Lexical grammar *)
+InputElementDiv = WS
+    | LT
+    | Comment
+    | CommontToken;
+
+CommonToken = IdentifierName | Punctuator | NumericLiteral | StringeLiteral;
+
+IdentifierName = IdentifierStart | (IdentifierName, IdentifierPart);
+
+(* For simplicity just consider latin alphabet characters instead of Unicode Code Points with property ID_Start *)
+IdentifierStart = ? Lower and Upper case Latin Alphabet ? | "$" | "_";
+
+IdentifierPart = ? Lower and Upper case Latin Alphabet and numbers ? | "$";
+
+ReservedWord = "if" | "for" | "const" | "let" | "null" | "true" | "false"
+    | "else" | "function" | "return" | "var" | "while" | "interface";
+
+Punctuator = "{" | "(" | ")" | "[" | "]" | "." | ";" | "," | "<" | ">" | "<=" | ">="
+    | "==" | "===" | "!=" | "+" | "-" | "*" | "%" | "!" | "&" | "&&" | "||" | ":" | "="
+    | "!";
+
+DivPunctuator = "/";
+
+RightBracePunctuator = "}";
+
+NullLiteral = "null";
+
+BooleanLiteral = "true" | "false";
+
+(* Numbers *)
+
+NumericLiteralSeparator = "_";
+
+NumericLiteral = DecimalIntegerLiteral | (DecimalIntegerLiteral, ".", [DecimalDigits_Sep]) | (".", DecimalDigits_Sep);
+
+DecimalIntegerLiteral = "0" | NonZeroDigit | (NonZeroDigit, [NumericLiteralSeparator], DecimalDigits_Sep);
+
+DecimalDigits_Sep = DecimalDigit | (DecimalDigits_Sep, DecimalDigit) | (DecimalDigits_Sep, NumericLiteralSeparator, DecimalDigit);
+
+DecimalDigits = DecimalDigit | (DecimalDigits, DecimalDigit) | (NumericLiteralSeparator, DecimalDigit);
+
+DecimalDigit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
+
+NonZeroDigit = DecimalDigit - "0";
+
+SignedInteger = DecimalDigits | ("+", DecimalDigits) | ("-", DecimalDigits);
+
+SignedInteger_Sep = DecimalDigits_Sep | ("+", DecimalDigits_Sep) | ("-", DecimalDigits_Sep);
+
+(* Strings *)
+
+StringLiteral = ('"', DoubleStringCharacters, '"') | ("'", SingleStringCharacters, "'");
+
+DoubleStringCharacters = DoubleStringCharacter, [DoubleStringCharacters];
+
+SingleStringCharacters = SingleStringCharacter, [SingleStringCharacters];
+
+DoubleStringCharacter = SourceCharacter - ('"' | "\" | LT) | ("\", EscapeSequence);
+
+SingleStringCharacter = SourceCharacter - ("'" |  "\" | LT) | ("\", EscapeSequence);
+
+EscapeSequence = CharacterEscapeSequence | UnicodeEscapeSequence;
+
+CharacterEscapeSequence = SingleEscapeCharacter | NonEscapeCharacter;
+
+(* See table 36 in section 12.8.4.1 *)
+SingleEscapeCharacter = "'" | '"' | "\" | "b" | "f" | "n" | "r" | "t" | "v";
+
+NonEscapeCharacter = SourceCharacter - (EscapeCharacter | LT);
+
+EscapeCharacter = SingleEscapeCharacter | DecimalDigit;
+
+UnicodeEscapeSequence = "u", "{", CodePoint,  "}";
+
+CodePoint = ? A HexDigit that is lower than 10FFFF ?;
+
+(* Comments *)
+
+Comment = MultiLineComment | SingleLineComment;
+
+MultiLineComment = "/", "*", [MultiLineCommentChars], "*", "/";
+
+MultiLineCommentChars =
+    (MultiLineNotAsteriskChar, [MultiLineCommentChars])
+    | "*" [PostAsteriskCommentChars];
+
+PostAsteriskCommentChars =
+    (MultiLineNotForwardSlashOrAsteriskChar, [MultiLineCommentChars])
+    | "*" [PostAsteriskCommentChars];
+
+MultiLineNotAsteriskChar = SourceCharacter - "*";
+
+MultiLineNotForwardSlashOrAsteriskChar = SourceCharacter - ("/" | "*");
+
+SingleLineComment = "//", [SingleLineCommentChars];
+
+SingleLineCommentChars = SingleLineCommentChar, [SingleLineCommentChars];
+
+SingleLineCommentChar = SourceCharacter - LT;
+
+SourceCharacter = ? Any Unicode code point ?;
+
+WS = ? White Space code points defined in clause 12.2 ?;
+
+LT = ? Line Terminators code points defined in clause 12.3 ?;
+
+LTSequence = ? Line Terminator Sequence defined in clause 12.3 ?;

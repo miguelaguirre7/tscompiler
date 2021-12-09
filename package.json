@@ -2,13 +2,17 @@
   "name": "tscompiler",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "",
   "scripts": {
     "compile": "tsc --noEmit",
-    "build": "tsc",
+    "build": "npm run lint && npm run test && tsc",
     "format": "prettier -w src/**/*.ts",
     "format:check": "prettier --list-different src/**/*.ts",
-    "test": "jest"
+    "lint": "xo",
+    "lint:fix": "xo --fix",
+    "precommit": "npm run lint && npm run test",
+    "test": "jest",
+    "prepare": "husky install"
   },
   "keywords": [],
   "author": "",
@@ -20,9 +24,12 @@
     "@types/jest": "^27.0.2",
     "@types/node": "^16.11.6",
     "babel-jest": "^27.3.1",
+    "eslint-plugin-jest": "^25.3.0",
+    "husky": "^7.0.0",
     "jest": "^27.3.1",
     "prettier": "^2.4.1",
-    "typescript": "^4.4.4"
+    "typescript": "^4.4.4",
+    "xo": "^0.47.0"
   },
   "dependencies": {
     "ts-node": "^10.4.0"

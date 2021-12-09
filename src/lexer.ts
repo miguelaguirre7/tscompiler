@@ -1,134 +1,213 @@
-import Token, { ValidToken } from "./token";
+import Token, { ValidToken } from './token';
+import regex from './util/regex';
+import * as helpers from './util/helpers';
 
 export default class Lexer {
-  private _input: string;
-  private currentChar: string;
-  private currentIndex: number;
+	private _input: string;
+	private currentChar: string;
+	private currentIndex: number;
 
-  constructor(input: string) {
-    this._input = input;
-    this.currentIndex = 0;
-    this.currentChar = this._input[this.currentIndex];
-  }
+	constructor(input: string) {
+		this._input = input;
+		this.currentIndex = 0;
+		this.currentChar = this._input[this.currentIndex];
+	}
 
-  set input(newInput: string) {
-    this._input = newInput;
-  }
+	get input() {
+		return this._input;
+	}
 
-  nextToken() {
-    while (this.currentChar) {
-      if (this.currentChar.match(/\s/)) {
-        this.advance();
-        continue;
-      } else if (this.currentChar.match(/[\d\.]/)) {
-        return new Token(ValidToken.DECIMAL_LITERAL, this.decimalLiteral());
-      } else if (this.currentChar.match(/["']/)) {
-        return this.string();
-      } else if (this.currentChar.match(/[a-zA-Z]/)) {
-        return this.word();
-      } else {
-        throw new SyntaxError("Invalid token");
-      }
-    }
+	set input(newInput: string) {
+		this._input = newInput;
+	}
 
-    return new Token(ValidToken.EOF, null);
-  }
+	reset(newInput?: string) {
+		if (newInput) {
+			this._input = newInput;
+		}
 
-  private advance() {
-    this.currentChar = this._input[++this.currentIndex];
-  }
+		this.currentIndex = 0;
+		this.currentChar = this._input[0];
+	}
 
-  private word() {
-    let token = "";
+	nextToken(): Token {
+		while (this.currentChar) {
+			if (regex.ws.test(this.currentChar)) {
+				this.advance();
+				continue;
+			} else if (regex.numericLiteral.test(this.currentChar)) {
+				return new Token(ValidToken.NUMERIC_LITERAL, this.numericLiteral());
+			} else if (regex.signedInteger.test(this.currentChar)) {
+				return new Token(ValidToken.NUMERIC_LITERAL, this.signedInteger());
+			} else if (regex.string.test(this.currentChar)) {
+				return new Token(ValidToken.STRING_LITERAL, this.string());
+			} else if (/[a-zA-Z]/.test(this.currentChar)) {
+				return this.word();
+			} else {
+				throw new SyntaxError('Invalid token');
+			}
+		}
 
-    while (this.currentChar && this.currentChar.match(/[a-zA-Z]/)) {
-      token += this.currentChar;
-      this.advance();
-    }
+		return new Token(ValidToken.EOF, null);
+	}
 
-    if (token === "true" || token === "false") {
-      return new Token(ValidToken.BOOLEAN, token);
-    }
+	private advance() {
+		this.currentChar = this._input[++this.currentIndex];
+	}
 
-    throw new Error("Invalid token");
-  }
+	private numericLiteral() {
+		let number = '';
+		let floatingPointCount = 0;
 
-  private string() {
-    let strToken = "";
-    const validStringRegex = /^("[^"]*[^\\]"|""|''|'[^']*[^\\]')$/;
+		while (regex.numericLiteral.test(this.currentChar)) {
+			if (regex.decimalDigit.test(this.currentChar)) {
+				number += this.decimalIntegerLiteral();
+			} else if (regex.dot.test(this.currentChar)) {
+				if (floatingPointCount > 0) throw new Error('Invalid number literal');
 
-    while (this.currentChar && !strToken.match(validStringRegex)) {
-      strToken += this.currentChar;
-      this.advance();
-    }
+				floatingPointCount++;
+				number += this.decimalDigitsSep();
+			}
+		}
 
-    if (!validStringRegex.test(strToken))
-      throw new SyntaxError("Invalid token");
+		return number;
+	}
 
-    return new Token(ValidToken.STRING_LITERAL, strToken);
-  }
+	private decimalIntegerLiteral() {
+		let decimal = this.currentChar;
 
-  private decimalDigits() {
-    let digits = "";
+		if (this.currentChar === '0') {
+			this.advance();
+			if (regex.decimalDigit.test(this.currentChar) || regex.numericLiteralSeparator.test(this.currentChar)) {
+				throw new Error('Invalid Octal literal');
+			}
 
-    while (this.currentChar && this.currentChar.match(/[\d_]/)) {
-      digits += this.currentChar;
-      this.advance();
-    }
+			return '0';
+		}
 
-    if (digits[digits.length - 1] === "_")
-      throw new SyntaxError(
-        "Numeric separators are not allowed at the end of numeric literals"
-      );
+		if (regex.nonZeroDigit.test(this.currentChar)) {
+			this.advance();
 
-    return digits;
-  }
+			if (regex.decimalDigit.test(this.currentChar) || regex.numericLiteralSeparator.test(this.currentChar)) {
+				decimal += this.currentChar;
+				this.advance();
 
-  private decimalLiteral() {
-    let number = this.decimalIntegerLiteral();
+				if (regex.numericLiteralSeparator.test(this.currentChar)) {
+					decimal += this.currentChar;
+					this.advance();
 
-    if (this.currentChar === ".") {
-      number += this.currentChar;
-      this.advance();
-      if (!this.isNum(this.currentChar)) {
-        if (number.length === 0 || (this.currentChar as string) === "_")
-          throw new SyntaxError("Unexpected token");
+					if (!regex.decimalDigit.test(this.currentChar)) {
+						throw new Error('Numeric separators are not allowed here');
+					}
+				}
 
-        return number;
-      }
+				decimal += this.decimalDigitsSep();
+			}
+		}
 
-      number += this.decimalDigits();
-    }
+		return decimal;
+	}
 
-    return number;
-  }
+	private decimalDigitsSep() {
+		let digits = this.currentChar;
+		this.advance();
 
-  private decimalIntegerLiteral() {
-    let int = "";
+		if (regex.numericLiteralSeparator.test(this.currentChar)) {
+			throw new Error('Numeric separators are not allowed here');
+		}
 
-    while (this.currentChar && this.currentChar.match(/[\d_]/)) {
-      int += this.currentChar;
-      this.advance();
-    }
+		while (regex.decimalDigit.test(this.currentChar) || regex.numericLiteralSeparator.test(this.currentChar)) {
+			digits += this.currentChar;
+			this.advance();
+		}
 
-    if (int.match(/^0\d+$/)) throw new SyntaxError("Invalid token");
+		if (digits.endsWith('_')) throw new Error('Numeric separators are not allowed here');
 
-    if (int[int.length - 1] === "_")
-      throw new SyntaxError(
-        "Numeric separators are not allowed at the end of numeric literals"
-      );
+		return digits;
+	}
 
-    return int;
-  }
+	private signedInteger() {
+		let integer = this.currentChar;
+		integer += this.decimalDigitsSep();
+		return integer;
+	}
 
-  reset(newInput?: string) {
-    if (newInput) this._input = newInput;
+	private word() {
+		let token = '';
 
-    this.currentIndex = 0;
-    this.currentChar = this._input[0];
-  }
+		while (this.currentChar && /[a-zA-Z]/.test(this.currentChar)) {
+			token += this.currentChar;
+			this.advance();
+		}
 
-  private isNum(str: string) {
-    return /\d/.test(str);
-  }
+		if (token === 'true' || token === 'false') {
+			return new Token(ValidToken.BOOLEAN, token);
+		}
+
+		throw new Error('Invalid token');
+	}
+
+	private string() {
+		let string = this.currentChar;
+		const stringCharacterRegex = this.currentChar === '"' ? regex.doubleStringCharacter : regex.singleStringCharacter;
+
+		this.advance();
+		while (this.currentChar !== undefined && (regex.singleEscapeFormattingCharacters.test(this.currentChar) || stringCharacterRegex.test(this.currentChar))) {
+			string += regex.escapeSequence.test(this.currentChar) ? this.escapeSequence() : this.currentChar;
+
+			if (helpers.isStringComplete(string)) break;
+
+			this.advance();
+		}
+
+		if (!helpers.isStringValid(string)) {
+			throw new Error('Unterminated string literal');
+		}
+
+		this.advance();
+
+		return string;
+	}
+
+	private escapeSequence() {
+		let sequence = this.currentChar;
+		this.advance();
+
+		if (regex.singleEscapeNonFormattingCharacters.test(this.currentChar) || regex.nonEscapeCharacter.test(this.currentChar)) {
+			sequence += this.currentChar;
+		} else if (regex.unicodeEscapeSequence.test(this.currentChar)) {
+			sequence += this.unicodeSequence();
+		}
+
+		return sequence;
+	}
+
+	private unicodeSequence() {
+		let uSequence = this.currentChar;
+		this.advance();
+
+		if (this.currentChar !== '{') {
+			throw new Error('Hexadecimal digit expected');
+		}
+
+		uSequence += this.currentChar;
+		this.advance();
+
+		while (regex.hexDigit.test(this.currentChar)) {
+			uSequence += this.currentChar;
+			this.advance();
+		}
+
+		if (this.currentChar === '{') {
+			throw new Error('Hexadecimal digit expected');
+		}
+
+		if (this.currentChar !== '}') {
+			throw new Error('Unterminated unicode sequence');
+		}
+
+		uSequence += this.currentChar;
+
+		return uSequence;
+	}
 }
