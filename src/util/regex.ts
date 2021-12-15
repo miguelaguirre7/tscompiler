@@ -17,6 +17,9 @@ const regex = {
 	doubleStringCharacter: /[^\u000A\u000D\u2028\u2029]/,
 	singleStringCharacter: /[^\u000A\u000D\u2028\u2029]/,
 	hexDigit: /[\dA-F]/,
+	word: /[a-zA-Z]/,
+	identifierStart: /[a-zA-Z$_]/,
+	identifierPart: /[a-zA-Z$\d]/,
 };
 
 export default regex;

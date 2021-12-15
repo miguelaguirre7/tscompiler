@@ -4,7 +4,7 @@ InputElementDiv = WS
     | Comment
     | CommontToken;
 
-CommonToken = IdentifierName | Punctuator | NumericLiteral | StringeLiteral;
+CommonToken = IdentifierName | Punctuator | NumericLiteral | StringLiteral;
 
 IdentifierName = IdentifierStart | (IdentifierName, IdentifierPart);
 
@@ -14,7 +14,8 @@ IdentifierStart = ? Lower and Upper case Latin Alphabet ? | "$" | "_";
 IdentifierPart = ? Lower and Upper case Latin Alphabet and numbers ? | "$";
 
 ReservedWord = "if" | "for" | "const" | "let" | "null" | "true" | "false"
-    | "else" | "function" | "return" | "var" | "while" | "interface";
+    | "else" | "function" | "return" | "var" | "while" | "interface" | "new" | "in" | "break"
+    | "continue" | "switch" | "void" | "case" | 'undefined';
 
 Punctuator = "{" | "(" | ")" | "[" | "]" | "." | ";" | "," | "<" | ">" | "<=" | ">="
     | "==" | "===" | "!=" | "+" | "-" | "*" | "%" | "!" | "&" | "&&" | "||" | ":" | "="

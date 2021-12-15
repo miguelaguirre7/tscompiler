@@ -204,10 +204,17 @@ describe('Lexer', () => {
 			});
 		});
 
+		it('Recognizes null literal', () => {
+			lexer.reset('null');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.NULL_LITERAL);
+		});
+
 		describe('Boolean', () => {
 			it('Recognizes boolean values', () => {
-				lexer.input = '  true false ';
-				lexer.reset();
+				lexer.reset('true false');
 
 				const trueToken = lexer.nextToken();
 				const falseToken = lexer.nextToken();
@@ -217,6 +224,157 @@ describe('Lexer', () => {
 				expect(falseToken.type).toMatch(ValidToken.BOOLEAN);
 				expect(falseToken.value).toMatch('false');
 			});
+		});
+	});
+
+	describe('Reserved Words', () => {
+		it('if', () => {
+			lexer.reset('if');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.IF);
+		});
+
+		it('else', () => {
+			lexer.reset('else');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.ELSE);
+		});
+
+		it('for', () => {
+			lexer.reset('for');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.FOR);
+		});
+
+		it('while', () => {
+			lexer.reset('while');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.WHILE);
+		});
+
+		it('const', () => {
+			lexer.reset('const');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.CONST);
+		});
+
+		it('let', () => {
+			lexer.reset('let');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.LET);
+		});
+
+		it('var', () => {
+			lexer.reset('var');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.VAR);
+		});
+
+		it('function', () => {
+			lexer.reset('function');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.FUNCTION);
+		});
+
+		it('continue', () => {
+			lexer.reset('continue');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.CONTINUE);
+		});
+		it('return', () => {
+			lexer.reset('return');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.RETURN);
+		});
+
+		it('interface', () => {
+			lexer.reset('interface');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.INTERFACE);
+		});
+
+		it('new', () => {
+			lexer.reset('new');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.NEW);
+		});
+
+		it('in', () => {
+			lexer.reset('in');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.IN);
+		});
+
+		it('break', () => {
+			lexer.reset('break');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.BREAK);
+		});
+
+		it('switch', () => {
+			lexer.reset('switch');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.SWITCH);
+		});
+
+		it('case', () => {
+			lexer.reset('case');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.CASE);
+		});
+
+		it('void', () => {
+			lexer.reset('void');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.VOID);
+		});
+
+		it('undefined', () => {
+			lexer.reset('undefined');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.UNDEFINED);
+		});
+
+		it('Throws error with unsupported reserved word', () => {
+			lexer.reset('async');
+
+			expect(() => lexer.nextToken()).toThrowError('Invalid Token');
 		});
 	});
 });

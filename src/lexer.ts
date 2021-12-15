@@ -1,6 +1,6 @@
-import Token, { ValidToken } from './token';
+import { Token, ValidToken } from './token';
 import regex from './util/regex';
-import * as helpers from './util/helpers';
+import reservedWords from './reserved_words';
 
 export default class Lexer {
 	private _input: string;
@@ -21,6 +21,12 @@ export default class Lexer {
 		this._input = newInput;
 	}
 
+	/**
+	 * Resets the lexer setting the current character to the first one
+	 * in the input
+	 * @param newInput Optional new input
+	 */
+
 	reset(newInput?: string) {
 		if (newInput) {
 			this._input = newInput;
@@ -30,6 +36,10 @@ export default class Lexer {
 		this.currentChar = this._input[0];
 	}
 
+	/**
+	 * Gets the next token in the lexer
+	 * @returns The next token recognized by the lexer
+	 */
 	nextToken(): Token {
 		while (this.currentChar) {
 			if (regex.ws.test(this.currentChar)) {
@@ -41,14 +51,14 @@ export default class Lexer {
 				return new Token(ValidToken.NUMERIC_LITERAL, this.signedInteger());
 			} else if (regex.string.test(this.currentChar)) {
 				return new Token(ValidToken.STRING_LITERAL, this.string());
-			} else if (/[a-zA-Z]/.test(this.currentChar)) {
+			} else if (regex.identifierStart.test(this.currentChar)) {
 				return this.word();
 			} else {
 				throw new SyntaxError('Invalid token');
 			}
 		}
 
-		return new Token(ValidToken.EOF, null);
+		return new Token(ValidToken.EOF);
 	}
 
 	private advance() {
@@ -133,34 +143,50 @@ export default class Lexer {
 	}
 
 	private word() {
-		let token = '';
+		let word = this.currentChar;
+		this.advance();
 
-		while (this.currentChar && /[a-zA-Z]/.test(this.currentChar)) {
-			token += this.currentChar;
+		while (this.currentChar && regex.identifierPart.test(this.currentChar)) {
+			word += this.currentChar;
 			this.advance();
 		}
 
-		if (token === 'true' || token === 'false') {
-			return new Token(ValidToken.BOOLEAN, token);
+		const token = reservedWords.get(word as ReservedWord);
+
+		if (token === undefined) {
+			throw new Error('Invalid Token');
 		}
 
-		throw new Error('Invalid token');
+		return token();
 	}
 
 	private string() {
 		let string = this.currentChar;
+		const quote = this.currentChar;
 		const stringCharacterRegex = this.currentChar === '"' ? regex.doubleStringCharacter : regex.singleStringCharacter;
 
 		this.advance();
-		while (this.currentChar !== undefined && (regex.singleEscapeFormattingCharacters.test(this.currentChar) || stringCharacterRegex.test(this.currentChar))) {
-			string += regex.escapeSequence.test(this.currentChar) ? this.escapeSequence() : this.currentChar;
 
-			if (helpers.isStringComplete(string)) break;
+		while (this.currentChar !== undefined && (regex.singleEscapeFormattingCharacters.test(this.currentChar) || stringCharacterRegex.test(this.currentChar))) {
+			if (regex.escapeSequence.test(this.currentChar)) {
+				string += this.escapeSequence();
+
+				// Prevent the loop from breaking when a escaped quote is found
+				if (this.currentChar === quote) {
+					this.advance();
+					continue;
+				}
+			} else {
+				string += this.currentChar;
+			}
+
+			// String is complete
+			if (this.currentChar === quote) break;
 
 			this.advance();
 		}
 
-		if (!helpers.isStringValid(string)) {
+		if (this.currentChar !== quote) {
 			throw new Error('Unterminated string literal');
 		}
 

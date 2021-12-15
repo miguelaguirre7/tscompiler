@@ -27,6 +27,12 @@
       "error",
       "always"
     ],
-    "curly": "off"
+    "curly": "off",
+    "unicorn/filename-case": [
+      "error",
+      {
+        "case": "snakeCase"
+      }
+    ]
   }
 }
