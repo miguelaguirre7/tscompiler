@@ -1,0 +1,73 @@
+import { ValidToken, Token } from '../token';
+
+interface ReservedWordsMap {
+	always: Map<ReservedWord, () => Token>;
+	context: Map<ContextualKeywords, () => Token>;
+}
+
+const reservedWords: ReservedWordsMap = {
+	always: new Map([
+		['if', () => new Token(ValidToken.IF)],
+		['for', () => new Token(ValidToken.FOR)],
+		['const', () => new Token(ValidToken.CONST)],
+		['let', () => new Token(ValidToken.LET)],
+		['null', () => new Token(ValidToken.NULL_LITERAL)],
+		['true', () => new Token(ValidToken.BOOLEAN, 'true')],
+		['false', () => new Token(ValidToken.BOOLEAN, 'false')],
+		['else', () => new Token(ValidToken.ELSE)],
+		['function', () => new Token(ValidToken.FUNCTION)],
+		['return', () => new Token(ValidToken.RETURN)],
+		['var', () => new Token(ValidToken.VAR)],
+		['while', () => new Token(ValidToken.WHILE)],
+		['interface', () => new Token(ValidToken.INTERFACE)],
+		['new', () => new Token(ValidToken.NEW)],
+		['in', () => new Token(ValidToken.IN)],
+		['break', () => new Token(ValidToken.BREAK)],
+		['continue', () => new Token(ValidToken.CONTINUE)],
+		['switch', () => new Token(ValidToken.SWITCH)],
+		['void', () => new Token(ValidToken.VOID)],
+		['case', () => new Token(ValidToken.CASE)],
+		['await', () => new Token(ValidToken.AWAIT)],
+		['catch', () => new Token(ValidToken.CATCH)],
+		['class', () => new Token(ValidToken.CLASS)],
+		['default', () => new Token(ValidToken.DEFAULT)],
+		['do', () => new Token(ValidToken.DO)],
+		['try', () => new Token(ValidToken.TRY)],
+		['typeof', () => new Token(ValidToken.TYPEOF)],
+		['instanceof', () => new Token(ValidToken.INSTANCEOF)],
+		['yield', () => new Token(ValidToken.YIELD)],
+		['delete', () => new Token(ValidToken.DELETE)],
+		['extends', () => new Token(ValidToken.EXTENDS)],
+		['super', () => new Token(ValidToken.SUPER)],
+		['finally', () => new Token(ValidToken.FINALLY)],
+		['import', () => new Token(ValidToken.IMPORT)],
+		['enum', () => new Token(ValidToken.ENUM)],
+		['this', () => new Token(ValidToken.THIS)],
+		['throw', () => new Token(ValidToken.THROW)],
+		['protected', () => new Token(ValidToken.PROTECTED)],
+		['private', () => new Token(ValidToken.PRIVATE)],
+		['public', () => new Token(ValidToken.PUBLIC)],
+		['static', () => new Token(ValidToken.STATIC)],
+		['implements', () => new Token(ValidToken.IMPLEMENTS)],
+		['package', () => new Token(ValidToken.PACKAGE)],
+	]),
+	context: new Map([
+		['of', () => new Token(ValidToken.OF)],
+		['get', () => new Token(ValidToken.GET)],
+		['set', () => new Token(ValidToken.SET)],
+		['any', () => new Token(ValidToken.TYPE, 'any')],
+		['declare', () => new Token(ValidToken.DECLARE)],
+		['require', () => new Token(ValidToken.REQUIRE)],
+		['string', () => new Token(ValidToken.TYPE, 'string')],
+		['number', () => new Token(ValidToken.TYPE, 'number')],
+		['symbol', () => new Token(ValidToken.TYPE, 'symbol')],
+		['object', () => new Token(ValidToken.TYPE, 'object')],
+		['boolean', () => new Token(ValidToken.TYPE, 'boolean')],
+		['from', () => new Token(ValidToken.FROM)],
+		['constructor', () => new Token(ValidToken.CONSTRUCTOR)],
+		['module', () => new Token(ValidToken.MODULE)],
+		['type', () => new Token(ValidToken.TYPE)],
+	]),
+};
+
+export default reservedWords;

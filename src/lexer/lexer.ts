@@ -1,5 +1,6 @@
-import { Token, ValidToken } from './token';
-import regex from './util/regex';
+import { Token, ValidToken } from '../token';
+import regex from '../util/regex';
+import operators from './punctuators';
 import reservedWords from './reserved_words';
 
 export default class Lexer {
@@ -45,16 +46,54 @@ export default class Lexer {
 			if (regex.ws.test(this.currentChar)) {
 				this.advance();
 				continue;
+			} else if (regex.operators.test(this.currentChar)) {
+				return this.punctuator();
 			} else if (regex.numericLiteral.test(this.currentChar)) {
 				return new Token(ValidToken.NUMERIC_LITERAL, this.numericLiteral());
-			} else if (regex.signedInteger.test(this.currentChar)) {
-				return new Token(ValidToken.NUMERIC_LITERAL, this.signedInteger());
 			} else if (regex.string.test(this.currentChar)) {
 				return new Token(ValidToken.STRING_LITERAL, this.string());
 			} else if (regex.identifierStart.test(this.currentChar)) {
 				return this.word();
-			} else {
-				throw new SyntaxError('Invalid token');
+			} else switch (this.currentChar) {
+				case '{': {
+					return new Token(ValidToken.OPEN_CURLY_BRACE);
+				}
+
+				case '}': {
+					return new Token(ValidToken.CLOSE_CURLY_BRACE);
+				}
+
+				case '(': {
+					return new Token(ValidToken.OPEN_PAREN);
+				}
+
+				case ')': {
+					return new Token(ValidToken.CLOSE_PAREN);
+				}
+
+				case '[': {
+					return new Token(ValidToken.OPEN_BRACKET);
+				}
+
+				case ']': {
+					return new Token(ValidToken.CLOSE_BRACKET);
+				}
+
+				case ';': {
+					return new Token(ValidToken.SEMICOLON);
+				}
+
+				case ':': {
+					return new Token(ValidToken.COLON);
+				}
+
+				case ',': {
+					return new Token(ValidToken.COMMA);
+				}
+
+				default: {
+					throw new SyntaxError('Invalid token');
+				}
 			}
 		}
 
@@ -63,6 +102,10 @@ export default class Lexer {
 
 	private advance() {
 		this.currentChar = this._input[++this.currentIndex];
+	}
+
+	private peek() {
+		return this.input[this.currentIndex + 1];
 	}
 
 	private numericLiteral() {
@@ -136,10 +179,26 @@ export default class Lexer {
 		return digits;
 	}
 
-	private signedInteger() {
-		let integer = this.currentChar;
-		integer += this.decimalDigitsSep();
-		return integer;
+	private punctuator() {
+		const nextChar = this.peek();
+
+		if ((regex.signedInteger.test(this.currentChar) || regex.dot.test(this.currentChar)) && regex.decimalDigit.test(nextChar))
+			return new Token(ValidToken.NUMERIC_LITERAL, this.decimalDigitsSep());
+		if (regex.numericLiteralSeparator.test(nextChar)) return this.word();
+
+		let punctuator = '';
+		while (this.currentChar !== undefined && !regex.decimalDigit.test(this.currentChar) && !regex.word.test(this.currentChar) && !regex.ws.test(this.currentChar)) {
+			punctuator += this.currentChar;
+			this.advance();
+		}
+
+		const operatorToken = operators.get(punctuator as Punctuator);
+
+		if (operatorToken === undefined) {
+			throw new Error('Invalid operator');
+		}
+
+		return operatorToken();
 	}
 
 	private word() {
@@ -151,7 +210,7 @@ export default class Lexer {
 			this.advance();
 		}
 
-		const token = reservedWords.get(word as ReservedWord);
+		const token = reservedWords.always.get(word as ReservedWord);
 
 		if (token === undefined) {
 			throw new Error('Invalid Token');

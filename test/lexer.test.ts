@@ -1,5 +1,5 @@
 /* eslint-disable jest/expect-expect, @typescript-eslint/quotes */
-import Lexer from '../src/lexer';
+import { Lexer } from '../src/lexer';
 import { ValidToken } from '../src/token';
 
 const lexer = new Lexer('');
@@ -93,10 +93,6 @@ describe('Lexer', () => {
 					it('Does not allow separators at the end of a positive signed integer', () => {
 						expectLexerToThrow(lexer, '+1124_');
 					});
-
-					it('Does not separators at the beginning of a positive signed integer', () => {
-						expectLexerToThrow(lexer, '+_1124');
-					});
 				});
 
 				describe('Negative', () => {
@@ -110,10 +106,6 @@ describe('Lexer', () => {
 
 					it('Does not allow separators at the end of a negative signed integer', () => {
 						expectLexerToThrow(lexer, '-1124_');
-					});
-
-					it('Does not separators at the beginning of a negative signed integer', () => {
-						expectLexerToThrow(lexer, '-_1124');
 					});
 				});
 			});
@@ -228,153 +220,943 @@ describe('Lexer', () => {
 	});
 
 	describe('Reserved Words', () => {
-		it('if', () => {
-			lexer.reset('if');
+		describe('Unconditionally reserved keywords', () => {
+			it('if', () => {
+				lexer.reset('if');
 
-			const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-			expect(token.type).toMatch(ValidToken.IF);
+				expect(token.type).toMatch(ValidToken.IF);
+			});
+
+			it('else', () => {
+				lexer.reset('else');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.ELSE);
+			});
+
+			it('for', () => {
+				lexer.reset('for');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.FOR);
+			});
+
+			it('while', () => {
+				lexer.reset('while');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.WHILE);
+			});
+
+			it('const', () => {
+				lexer.reset('const');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.CONST);
+			});
+
+			it('let', () => {
+				lexer.reset('let');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.LET);
+			});
+
+			it('var', () => {
+				lexer.reset('var');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.VAR);
+			});
+
+			it('function', () => {
+				lexer.reset('function');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.FUNCTION);
+			});
+
+			it('continue', () => {
+				lexer.reset('continue');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.CONTINUE);
+			});
+
+			it('return', () => {
+				lexer.reset('return');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.RETURN);
+			});
+
+			it('interface', () => {
+				lexer.reset('interface');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.INTERFACE);
+			});
+
+			it('new', () => {
+				lexer.reset('new');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.NEW);
+			});
+
+			it('in', () => {
+				lexer.reset('in');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.IN);
+			});
+
+			it('break', () => {
+				lexer.reset('break');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.BREAK);
+			});
+
+			it('switch', () => {
+				lexer.reset('switch');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.SWITCH);
+			});
+
+			it('case', () => {
+				lexer.reset('case');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.CASE);
+			});
+
+			it('void', () => {
+				lexer.reset('void');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.VOID);
+			});
+
+			it('await', () => {
+				lexer.reset('await');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.AWAIT);
+			});
+
+			it('catch', () => {
+				lexer.reset('catch');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.CATCH);
+			});
+
+			it('class', () => {
+				lexer.reset('class');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.CLASS);
+			});
+
+			it('default', () => {
+				lexer.reset('default');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.DEFAULT);
+			});
+
+			it('do', () => {
+				lexer.reset('do');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.DO);
+			});
+
+			it('import', () => {
+				lexer.reset('import');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.IMPORT);
+			});
+
+			it('enum', () => {
+				lexer.reset('enum');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.ENUM);
+			});
+
+			it('null', () => {
+				lexer.reset('null');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.NULL_LITERAL);
+			});
+
+			it('super', () => {
+				lexer.reset('super');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.SUPER);
+			});
+
+			it('this', () => {
+				lexer.reset('this');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.THIS);
+			});
+
+			it('throw', () => {
+				lexer.reset('throw');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.THROW);
+			});
+
+			it('try', () => {
+				lexer.reset('try');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.TRY);
+			});
+
+			it('typeof', () => {
+				lexer.reset('typeof');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.TYPEOF);
+			});
+
+			it('instanceof', () => {
+				lexer.reset('instanceof');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.INSTANCEOF);
+			});
+
+			it('yield', () => {
+				lexer.reset('yield');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.YIELD);
+			});
+
+			it('delete', () => {
+				lexer.reset('delete');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.DELETE);
+			});
+
+			it('extends', () => {
+				lexer.reset('extends');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.EXTENDS);
+			});
+
+			it('protected', () => {
+				lexer.reset('protected');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.PROTECTED);
+			});
+
+			it('private', () => {
+				lexer.reset('private');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.PRIVATE);
+			});
+
+			it('public', () => {
+				lexer.reset('public');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.PUBLIC);
+			});
+
+			it('static', () => {
+				lexer.reset('static');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.STATIC);
+			});
+
+			it('implements', () => {
+				lexer.reset('implements');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.IMPLEMENTS);
+			});
+
+			it('package', () => {
+				lexer.reset('package');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.PACKAGE);
+			});
 		});
 
-		it('else', () => {
-			lexer.reset('else');
+		// Describe('Contextual keywords', () => {
+		// 	it('of', () => {
+		// 		lexer.reset('of');
 
-			const token = lexer.nextToken();
+		// 		const token = lexer.nextToken();
 
-			expect(token.type).toMatch(ValidToken.ELSE);
-		});
+		// 		expect(token.type).toMatch(ValidToken.OF);
+		// 	});
 
-		it('for', () => {
-			lexer.reset('for');
+		// 	it('get', () => {
+		// 		lexer.reset('get');
 
-			const token = lexer.nextToken();
+		// 		const token = lexer.nextToken();
 
-			expect(token.type).toMatch(ValidToken.FOR);
-		});
+		// 		expect(token.type).toMatch(ValidToken.GET);
+		// 	});
 
-		it('while', () => {
-			lexer.reset('while');
+		// 	it('set', () => {
+		// 		lexer.reset('set');
 
-			const token = lexer.nextToken();
+		// 		const token = lexer.nextToken();
 
-			expect(token.type).toMatch(ValidToken.WHILE);
-		});
+		// 		expect(token.type).toMatch(ValidToken.SET);
+		// 	});
 
-		it('const', () => {
-			lexer.reset('const');
+		// 	it('any', () => {
+		// 		lexer.reset('any');
 
-			const token = lexer.nextToken();
+		// 		const token = lexer.nextToken();
 
-			expect(token.type).toMatch(ValidToken.CONST);
-		});
+		// 		expect(token.type).toMatch(ValidToken.TYPE);
+		// 		expect(token.value).toMatch('any');
+		// 	});
 
-		it('let', () => {
-			lexer.reset('let');
+		// 	it('string', () => {
+		// 		lexer.reset('string');
 
-			const token = lexer.nextToken();
+		// 		const token = lexer.nextToken();
 
-			expect(token.type).toMatch(ValidToken.LET);
-		});
+		// 		expect(token.type).toMatch(ValidToken.TYPE);
+		// 		expect(token.value).toMatch('string');
+		// 	});
+		// 	it('number', () => {
+		// 		lexer.reset('number');
 
-		it('var', () => {
-			lexer.reset('var');
+		// 		const token = lexer.nextToken();
 
-			const token = lexer.nextToken();
+		// 		expect(token.type).toMatch(ValidToken.TYPE);
+		// 		expect(token.value).toMatch('number');
+		// 	});
 
-			expect(token.type).toMatch(ValidToken.VAR);
-		});
+		// 	it('boolean', () => {
+		// 		lexer.reset('boolean');
 
-		it('function', () => {
-			lexer.reset('function');
+		// 		const token = lexer.nextToken();
 
-			const token = lexer.nextToken();
+		// 		expect(token.type).toMatch(ValidToken.TYPE);
+		// 		expect(token.value).toMatch('boolean');
+		// 	});
 
-			expect(token.type).toMatch(ValidToken.FUNCTION);
-		});
+		// 	it('symbol', () => {
+		// 		lexer.reset('symbol');
 
-		it('continue', () => {
-			lexer.reset('continue');
+		// 		const token = lexer.nextToken();
 
-			const token = lexer.nextToken();
+		// 		expect(token.type).toMatch(ValidToken.TYPE);
+		// 		expect(token.value).toMatch('symbol');
+		// 	});
 
-			expect(token.type).toMatch(ValidToken.CONTINUE);
-		});
-		it('return', () => {
-			lexer.reset('return');
+		// 	it('declare', () => {
+		// 		lexer.reset('declare');
 
-			const token = lexer.nextToken();
+		// 		const token = lexer.nextToken();
 
-			expect(token.type).toMatch(ValidToken.RETURN);
-		});
+		// 		expect(token.type).toMatch(ValidToken.DECLARE);
+		// 	});
 
-		it('interface', () => {
-			lexer.reset('interface');
+		// 	it('require', () => {
+		// 		lexer.reset('require');
 
-			const token = lexer.nextToken();
+		// 		const token = lexer.nextToken();
 
-			expect(token.type).toMatch(ValidToken.INTERFACE);
-		});
+		// 		expect(token.type).toMatch(ValidToken.REQUIRE);
+		// 	});
 
-		it('new', () => {
-			lexer.reset('new');
+		// 	it('from', () => {
+		// 		lexer.reset('from');
 
-			const token = lexer.nextToken();
+		// 		const token = lexer.nextToken();
 
-			expect(token.type).toMatch(ValidToken.NEW);
-		});
+		// 		expect(token.type).toMatch(ValidToken.FROM);
+		// 	});
 
-		it('in', () => {
-			lexer.reset('in');
+		// 	it('constructor', () => {
+		// 		lexer.reset('constructor');
 
-			const token = lexer.nextToken();
+		// 		const token = lexer.nextToken();
 
-			expect(token.type).toMatch(ValidToken.IN);
-		});
+		// 		expect(token.type).toMatch(ValidToken.CONSTRUCTOR);
+		// 	});
 
-		it('break', () => {
-			lexer.reset('break');
+		// 	it('module', () => {
+		// 		lexer.reset('module');
 
-			const token = lexer.nextToken();
+		// 		const token = lexer.nextToken();
 
-			expect(token.type).toMatch(ValidToken.BREAK);
-		});
+		// 		expect(token.type).toMatch(ValidToken.MODULE);
+		// 	});
 
-		it('switch', () => {
-			lexer.reset('switch');
+		// 	it('type', () => {
+		// 		lexer.reset('type');
 
-			const token = lexer.nextToken();
+		// 		const token = lexer.nextToken();
 
-			expect(token.type).toMatch(ValidToken.SWITCH);
-		});
-
-		it('case', () => {
-			lexer.reset('case');
-
-			const token = lexer.nextToken();
-
-			expect(token.type).toMatch(ValidToken.CASE);
-		});
-
-		it('void', () => {
-			lexer.reset('void');
-
-			const token = lexer.nextToken();
-
-			expect(token.type).toMatch(ValidToken.VOID);
-		});
-
-		it('undefined', () => {
-			lexer.reset('undefined');
-
-			const token = lexer.nextToken();
-
-			expect(token.type).toMatch(ValidToken.UNDEFINED);
-		});
+		// 		expect(token.type).toMatch(ValidToken.TYPE);
+		// 	});
+		// });
 
 		it('Throws error with unsupported reserved word', () => {
 			lexer.reset('async');
 
 			expect(() => lexer.nextToken()).toThrowError('Invalid Token');
+		});
+	});
+
+	describe('Operators', () => {
+		it('{', () => {
+			lexer.reset('{');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+		});
+
+		it('}', () => {
+			lexer.reset('}');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+		});
+
+		it('(', () => {
+			lexer.reset('(');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.OPEN_PAREN);
+		});
+
+		it(')', () => {
+			lexer.reset(')');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.CLOSE_PAREN);
+		});
+
+		it('[', () => {
+			lexer.reset('[');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.OPEN_BRACKET);
+		});
+
+		it(']', () => {
+			lexer.reset(']');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.CLOSE_BRACKET);
+		});
+
+		it('.', () => {
+			lexer.reset('.');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.DOT);
+		});
+
+		it('...', () => {
+			lexer.reset('...');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.SPREAD);
+		});
+
+		it(';', () => {
+			lexer.reset(';');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.SEMICOLON);
+		});
+
+		it(':', () => {
+			lexer.reset(':');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COLON);
+		});
+
+		it(',', () => {
+			lexer.reset(',');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMMA);
+		});
+
+		it('<', () => {
+			lexer.reset('<');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPARISON_OP);
+			expect(token.value).toMatch('<');
+		});
+
+		it('>', () => {
+			lexer.reset('>');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPARISON_OP);
+			expect(token.value).toMatch('>');
+		});
+
+		it('>=', () => {
+			lexer.reset('>=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPARISON_OP);
+			expect(token.value).toMatch('>=');
+		});
+
+		it('<=', () => {
+			lexer.reset('<=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPARISON_OP);
+			expect(token.value).toMatch('<=');
+		});
+
+		it('==', () => {
+			lexer.reset('==');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPARISON_OP);
+			expect(token.value).toMatch('==');
+		});
+
+		it('===', () => {
+			lexer.reset('===');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPARISON_OP);
+			expect(token.value).toMatch('===');
+		});
+
+		it('!=', () => {
+			lexer.reset('!=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPARISON_OP);
+			expect(token.value).toMatch('!=');
+		});
+
+		it('!==', () => {
+			lexer.reset('!==');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPARISON_OP);
+			expect(token.value).toMatch('!==');
+		});
+
+		it('+', () => {
+			lexer.reset('+');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.PLUS);
+		});
+
+		it('-', () => {
+			lexer.reset('-');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.MINUS);
+		});
+
+		it('*', () => {
+			lexer.reset('*');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.MULTIPLICATION);
+		});
+
+		it('%', () => {
+			lexer.reset('%');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.MODULO);
+		});
+
+		it('**', () => {
+			lexer.reset('**');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.EXPONENTIATION);
+		});
+
+		it('++', () => {
+			lexer.reset('++');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.INCREMENT);
+		});
+
+		it('--', () => {
+			lexer.reset('--');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.DECREMENT);
+		});
+
+		it('!', () => {
+			lexer.reset('!');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.NEGATION);
+		});
+
+		it('<<', () => {
+			lexer.reset('<<');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.BITWISE_OP);
+			expect(token.value).toMatch('<<');
+		});
+
+		it('>>', () => {
+			lexer.reset('>>');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.BITWISE_OP);
+			expect(token.value).toMatch('>>');
+		});
+
+		it('>>>', () => {
+			lexer.reset('>>>');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.BITWISE_OP);
+			expect(token.value).toMatch('>>>');
+		});
+
+		it('&', () => {
+			lexer.reset('&');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.BITWISE_OP);
+			expect(token.value).toMatch('&');
+		});
+
+		it('|', () => {
+			lexer.reset('|');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.BITWISE_OP);
+			expect(token.value).toMatch('|');
+		});
+
+		it('^', () => {
+			lexer.reset('^');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.BITWISE_OP);
+			expect(token.value).toMatch('^');
+		});
+
+		it('~', () => {
+			lexer.reset('~');
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.BITWISE_NOT);
+			expect(token.value).toMatch('~');
+		});
+
+		it('??', () => {
+			lexer.reset('??');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.NULL_COALESCING);
+		});
+
+		it('?', () => {
+			lexer.reset('?');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.QUESTION_MARK);
+			expect(token.value).toMatch('?');
+		});
+
+		it('&&', () => {
+			lexer.reset('&&');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.LOGICAL_OP);
+			expect(token.value).toMatch('&&');
+		});
+
+		it('||', () => {
+			lexer.reset('||');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.LOGICAL_OP);
+			expect(token.value).toMatch('||');
+		});
+
+		it('=', () => {
+			lexer.reset('=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.ASSIGNMENT);
+		});
+
+		it('+=', () => {
+			lexer.reset('+=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('+=');
+		});
+
+		it('-=', () => {
+			lexer.reset('-=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('-=');
+		});
+
+		it('*=', () => {
+			lexer.reset('*=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('*=');
+		});
+
+		it('%=', () => {
+			lexer.reset('%=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('%=');
+		});
+
+		it('**=', () => {
+			lexer.reset('**=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('**=');
+		});
+
+		it('<<=', () => {
+			lexer.reset('<<=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('<<=');
+		});
+
+		it('>>=', () => {
+			lexer.reset('>>=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('>>=');
+		});
+
+		it('>>>=', () => {
+			lexer.reset('>>>=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('>>>=');
+		});
+
+		it('&=', () => {
+			lexer.reset('&=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('&=');
+		});
+
+		it('|=', () => {
+			lexer.reset('|=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('|=');
+		});
+
+		it('^=', () => {
+			lexer.reset('^=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('^=');
+		});
+
+		it('&&=', () => {
+			lexer.reset('&&=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('&&=');
+		});
+
+		it('||=', () => {
+			lexer.reset('||=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('||=');
+		});
+
+		it('??=', () => {
+			lexer.reset('??=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('??=');
+		});
+
+		it('=>', () => {
+			lexer.reset('=>');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.ARROW);
+			expect(token.value).toMatch('=>');
+		});
+
+		it('?.', () => {
+			lexer.reset('?.');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.OPTIONAL_CHAINING);
+			expect(token.value).toMatch('?.');
+		});
+
+		it('/', () => {
+			lexer.reset('/');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.DIV_PUNCTUATOR);
+			expect(token.value).toMatch('/');
+		});
+
+		it('/=', () => {
+			lexer.reset('/=');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(token.value).toMatch('/=');
 		});
 	});
 });

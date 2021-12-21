@@ -3,6 +3,7 @@ const regex = {
 	ws: /\s/,
 	numericLiteral: /[\d.]/,
 	dot: /\./,
+	operators: /[/+*%=!?&|~><.^-]/,
 	signedInteger: /[+-]/,
 	decimalDigit: /\d/,
 	nonZeroDigit: /[1-9]/,

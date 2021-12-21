@@ -8,20 +8,29 @@ CommonToken = IdentifierName | Punctuator | NumericLiteral | StringLiteral;
 
 IdentifierName = IdentifierStart | (IdentifierName, IdentifierPart);
 
+Identifier = IdentifierName - ReservedWord;
+
 (* For simplicity just consider latin alphabet characters instead of Unicode Code Points with property ID_Start *)
 IdentifierStart = ? Lower and Upper case Latin Alphabet ? | "$" | "_";
 
 IdentifierPart = ? Lower and Upper case Latin Alphabet and numbers ? | "$";
 
-ReservedWord = "if" | "for" | "const" | "let" | "null" | "true" | "false"
-    | "else" | "function" | "return" | "var" | "while" | "interface" | "new" | "in" | "break"
-    | "continue" | "switch" | "void" | "case" | 'undefined';
+ReservedWord = "await" | "catch" | "class" | "default" | "do" | "if" | "for" | "const" | "let" | "null"
+    | "true" | "false" | "else" | "function" | "return" | "var" | "while" | "interface" | "new" | "in" | "break"
+    | "continue" | "switch" | "case" | "finally" | "import" | "enum" | "null" | "super" | "this" | "throw"
+    | "try" | "typeof" | "instanceof" | "yield" | "delete" | "extends" | "void" | "interface"
+    | "protected" | "private" | "public" | "static" | "implements" | "package";
 
-Punctuator = "{" | "(" | ")" | "[" | "]" | "." | ";" | "," | "<" | ">" | "<=" | ">="
-    | "==" | "===" | "!=" | "+" | "-" | "*" | "%" | "!" | "&" | "&&" | "||" | ":" | "="
-    | "!";
+PrimitiveTypes = "number" | "string" | "object" | "boolean" | "undefined" | "never" | "unknown" | "symbol";
 
-DivPunctuator = "/";
+Punctuator = "{" | "(" | ")" | "[" | "]" | "." | "..." | ";" | "," | "<" | ">" | "<=" | ">="
+    | "==" | "===" | "!=" | "!==" | "+" | "-" | "*" | "%" | "**" | "++" | "--" | "!" |  "<<" | ">>" | ">>>"
+    | "&" | "|" | "^" | "~" | "??" | "?" | "&&" | "||" | ":" | "=" | "!" | "+=" | "-=" | "*="
+    | "%=" | "**=" | "<<=" | ">>=" | ">>>=" | "&=" | "|=" | "^=" | "&&=" | "||=" | "??=" | "=>";
+
+OptionalChainingPunctuator = "?.", ? Not a decimal digit ?;
+
+DivPunctuator = "/" | "/=";
 
 RightBracePunctuator = "}";
 
