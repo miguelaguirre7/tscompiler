@@ -7,6 +7,8 @@ export default class Lexer {
 	private _input: string;
 	private currentChar: string;
 	private currentIndex: number;
+	/* eslint-disable-next-line  @typescript-eslint/class-literal-property-style, @typescript-eslint/naming-convention */
+	private readonly MAX_UNICODE_ESCAPE_VALUE = 0x10_FF_FF;
 
 	constructor(input: string) {
 		this._input = input;
@@ -46,6 +48,8 @@ export default class Lexer {
 			if (regex.ws.test(this.currentChar)) {
 				this.advance();
 				continue;
+			} else if (regex.commentStart.test(this.currentChar)) {
+				return this.comment();
 			} else if (regex.operators.test(this.currentChar)) {
 				return this.punctuator();
 			} else if (regex.numericLiteral.test(this.currentChar)) {
@@ -179,6 +183,54 @@ export default class Lexer {
 		return digits;
 	}
 
+	private comment() {
+		const nextChar = this.peek();
+
+		if (!regex.commentContinue.test(nextChar)) return this.punctuator();
+
+		return regex.commentStart.test(nextChar) ? this.singleLineComment() : this.multiLineComment();
+	}
+
+	private singleLineComment() {
+		let comment = this.currentChar;
+		this.advance();
+
+		while (this.currentChar !== undefined && !regex.lineTerminators.test(this.currentChar)) {
+			comment += this.currentChar;
+			this.advance();
+		}
+
+		return new Token(ValidToken.SINGLE_LINE_COMMENT, comment);
+	}
+
+	private multiLineComment() {
+		let comment = this.currentChar;
+		this.advance();
+
+		while (this.currentChar !== undefined) {
+			comment += this.currentChar;
+
+			if (this.currentChar === '*') {
+				const nextChar = this.peek();
+				if (regex.commentStart.test(nextChar)) {
+					this.advance();
+					comment += this.currentChar;
+					break;
+				}
+			}
+
+			this.advance();
+		}
+
+		if (this.currentChar === undefined) {
+			throw new Error('*/ expected.');
+		}
+
+		this.advance();
+
+		return new Token(ValidToken.MULTI_LINE_COMMENT, comment);
+	}
+
 	private punctuator() {
 		const nextChar = this.peek();
 
@@ -195,7 +247,7 @@ export default class Lexer {
 		const operatorToken = operators.get(punctuator as Punctuator);
 
 		if (operatorToken === undefined) {
-			throw new Error('Invalid operator');
+			throw new Error('Invalid punctuator');
 		}
 
 		return operatorToken();
@@ -278,8 +330,11 @@ export default class Lexer {
 		uSequence += this.currentChar;
 		this.advance();
 
+		let unicodeValue = this.currentChar;
+
 		while (regex.hexDigit.test(this.currentChar)) {
 			uSequence += this.currentChar;
+			unicodeValue += this.currentChar;
 			this.advance();
 		}
 
@@ -289,6 +344,11 @@ export default class Lexer {
 
 		if (this.currentChar !== '}') {
 			throw new Error('Unterminated unicode sequence');
+		}
+
+		const parsedValue = Number.parseInt(unicodeValue, 16);
+		if (parsedValue < 0 || parsedValue > this.MAX_UNICODE_ESCAPE_VALUE) {
+			throw new Error('An extended Unicode escape value must be between 0x00 and 0x10FFFF inclusive.');
 		}
 
 		uSequence += this.currentChar;

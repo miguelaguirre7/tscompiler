@@ -193,6 +193,12 @@ describe('Lexer', () => {
 
 					expect(() => lexer.nextToken()).toThrowError('Unterminated unicode sequence');
 				});
+
+				it('Throws an error when the unicode value is out of range', () => {
+					lexer.reset('"String with a \\u{FFFFFF} character"');
+
+					expect(() => lexer.nextToken()).toThrowError('An extended Unicode escape value must be between 0x00 and 0x10FFFF inclusive.');
+				});
 			});
 		});
 
@@ -215,6 +221,48 @@ describe('Lexer', () => {
 				expect(trueToken.value).toMatch('true');
 				expect(falseToken.type).toMatch(ValidToken.BOOLEAN);
 				expect(falseToken.value).toMatch('false');
+			});
+		});
+	});
+
+	describe('Comments', () => {
+		describe('Multi Line', () => {
+			it('Recognizes multi line comments', () => {
+				lexer.reset('/* This is a \t multi \n line \n comment */');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.MULTI_LINE_COMMENT);
+				expect(token.value).toMatch('/* This is a \t multi \n line \n comment */');
+			});
+
+			it('Throws an error with a non-terminated comment', () => {
+				lexer.reset('/* Unterminated \n comment ');
+
+				expect(() => lexer.nextToken()).toThrowError('*/ expected.');
+			});
+		});
+
+		describe('Single Line', () => {
+			it('Recognizes single line comments', () => {
+				lexer.reset('// This is a single line comment');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.SINGLE_LINE_COMMENT);
+				expect(token.value).toMatch('// This is a single line comment');
+			});
+
+			it('Comments are terminated with a new line', () => {
+				lexer.reset('// First comment\n // Second comment\n');
+
+				const firstComment = lexer.nextToken();
+				const secondComment = lexer.nextToken();
+
+				expect(firstComment.type).toMatch(ValidToken.SINGLE_LINE_COMMENT);
+				expect(firstComment.value).toMatch('// First comment');
+				expect(secondComment.type).toMatch(ValidToken.SINGLE_LINE_COMMENT);
+				expect(secondComment.value).toMatch('// Second comment');
 			});
 		});
 	});
