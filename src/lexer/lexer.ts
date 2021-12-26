@@ -1,6 +1,6 @@
 import { Token, ValidToken } from '../token';
 import regex from '../util/regex';
-import operators from './punctuators';
+import punctuators from './punctuators';
 import reservedWords from './reserved_words';
 
 export default class Lexer {
@@ -9,11 +9,13 @@ export default class Lexer {
 	private currentIndex: number;
 	/* eslint-disable-next-line  @typescript-eslint/class-literal-property-style, @typescript-eslint/naming-convention */
 	private readonly MAX_UNICODE_ESCAPE_VALUE = 0x10_FF_FF;
+	private readonly _eofToken: Token;
 
 	constructor(input: string) {
 		this._input = input;
 		this.currentIndex = 0;
 		this.currentChar = this._input[this.currentIndex];
+		this._eofToken = new Token(ValidToken.EOF);
 	}
 
 	get input() {
@@ -22,6 +24,10 @@ export default class Lexer {
 
 	set input(newInput: string) {
 		this._input = newInput;
+	}
+
+	get eofToken() {
+		return this._eofToken;
 	}
 
 	/**
@@ -58,54 +64,60 @@ export default class Lexer {
 				return new Token(ValidToken.STRING_LITERAL, this.string());
 			} else if (regex.identifierStart.test(this.currentChar)) {
 				return this.word();
-			} else switch (this.currentChar) {
-				case '{': {
-					return new Token(ValidToken.OPEN_CURLY_BRACE);
-				}
+			} else {
+				const char = this.currentChar;
+				this.advance();
 
-				case '}': {
-					return new Token(ValidToken.CLOSE_CURLY_BRACE);
-				}
+				switch (char) {
+					case '{': {
+						return new Token(ValidToken.OPEN_CURLY_BRACE, '{');
+					}
 
-				case '(': {
-					return new Token(ValidToken.OPEN_PAREN);
-				}
+					case '}': {
+						return new Token(ValidToken.CLOSE_CURLY_BRACE, '}');
+					}
 
-				case ')': {
-					return new Token(ValidToken.CLOSE_PAREN);
-				}
+					case '(': {
+						return new Token(ValidToken.OPEN_PAREN, '(');
+					}
 
-				case '[': {
-					return new Token(ValidToken.OPEN_BRACKET);
-				}
+					case ')': {
+						return new Token(ValidToken.CLOSE_PAREN, ')');
+					}
 
-				case ']': {
-					return new Token(ValidToken.CLOSE_BRACKET);
-				}
+					case '[': {
+						return new Token(ValidToken.OPEN_BRACKET, '[');
+					}
 
-				case ';': {
-					return new Token(ValidToken.SEMICOLON);
-				}
+					case ']': {
+						return new Token(ValidToken.CLOSE_BRACKET, ']');
+					}
 
-				case ':': {
-					return new Token(ValidToken.COLON);
-				}
+					case ';': {
+						return new Token(ValidToken.SEMICOLON, ';');
+					}
 
-				case ',': {
-					return new Token(ValidToken.COMMA);
-				}
+					case ':': {
+						return new Token(ValidToken.COLON, ':');
+					}
 
-				default: {
-					throw new SyntaxError('Invalid token');
+					case ',': {
+						return new Token(ValidToken.COMMA, ',');
+					}
+
+					default: {
+						throw new SyntaxError('Invalid token');
+					}
 				}
 			}
 		}
 
-		return new Token(ValidToken.EOF);
+		return this._eofToken;
 	}
 
-	private advance() {
-		this.currentChar = this._input[++this.currentIndex];
+	private advance(amount = 1) {
+		this.currentIndex += amount;
+		this.currentChar = this._input[this.currentIndex];
 	}
 
 	private peek() {
@@ -236,37 +248,34 @@ export default class Lexer {
 
 		if ((regex.signedInteger.test(this.currentChar) || regex.dot.test(this.currentChar)) && regex.decimalDigit.test(nextChar))
 			return new Token(ValidToken.NUMERIC_LITERAL, this.decimalDigitsSep());
-		if (regex.numericLiteralSeparator.test(nextChar)) return this.word();
 
-		let punctuator = '';
-		while (this.currentChar !== undefined && !regex.decimalDigit.test(this.currentChar) && !regex.word.test(this.currentChar) && !regex.ws.test(this.currentChar)) {
-			punctuator += this.currentChar;
-			this.advance();
+		// Grab the next 4 characters in the input, which is the length of the longest punctuator
+		const punctuator = this.input.slice(this.currentIndex, this.currentIndex + 4) as Punctuator;
+
+		// Get the longest punctuator possible
+		for (let i = 4; i >= 0; i--) {
+			const candidate = punctuator.slice(0, Math.max(0, i)) as Punctuator;
+			if (punctuators.has(candidate)) {
+				this.advance(candidate.length);
+				return punctuators.get(candidate)!();
+			}
 		}
 
-		const operatorToken = operators.get(punctuator as Punctuator);
-
-		if (operatorToken === undefined) {
-			throw new Error('Invalid punctuator');
-		}
-
-		return operatorToken();
+		throw new Error('Invalid punctuator');
 	}
 
 	private word() {
 		let word = this.currentChar;
 		this.advance();
 
-		while (this.currentChar && regex.identifierPart.test(this.currentChar)) {
+		while (this.currentChar !== undefined && regex.identifierPart.test(this.currentChar)) {
 			word += this.currentChar;
 			this.advance();
 		}
 
-		const token = reservedWords.always.get(word as ReservedWord);
+		const token = reservedWords.always.get(word as ReservedWord) ?? reservedWords.contextual.get(word as ContextualKeywords);
 
-		if (token === undefined) {
-			throw new Error('Invalid Token');
-		}
+		if (token === undefined) return new Token(ValidToken.IDENTIFIER, word);
 
 		return token();
 	}

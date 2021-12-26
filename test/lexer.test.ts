@@ -1,6 +1,6 @@
 /* eslint-disable jest/expect-expect, @typescript-eslint/quotes */
 import { Lexer } from '../src/lexer';
-import { ValidToken } from '../src/token';
+import { Token, ValidToken } from '../src/token';
 
 const lexer = new Lexer('');
 
@@ -147,18 +147,21 @@ describe('Lexer', () => {
 			});
 
 			it('Throws an error with an incomplete string', () => {
-				lexer.reset("'aoeu' aoeun'");
-
+				lexer.reset("'string' identifier'");
 				const token = lexer.nextToken();
 
 				expect(token.type).toMatch(ValidToken.STRING_LITERAL);
-				expect(token.value).toMatch("'aoeu'");
+				expect(token.value).toMatch("'string'");
 
-				expect(() => lexer.nextToken()).toThrow();
+				const identifier = lexer.nextToken();
+				expect(identifier.type).toMatch(ValidToken.IDENTIFIER);
+				expect(identifier.value).toMatch('identifier');
+
+				expect(() => lexer.nextToken()).toThrowError('Unterminated string literal');
 			});
 
 			it('Throws an error with invalid characters', () => {
-				lexer.reset("'aoeu\\'");
+				lexer.reset("'invalid\\'");
 
 				expect(() => lexer.nextToken()).toThrowError('Unterminated string literal');
 			});
@@ -264,6 +267,17 @@ describe('Lexer', () => {
 				expect(secondComment.type).toMatch(ValidToken.SINGLE_LINE_COMMENT);
 				expect(secondComment.value).toMatch('// Second comment');
 			});
+		});
+	});
+
+	describe('Identifiers', () => {
+		it('Recognizes identifiers', () => {
+			lexer.reset('variable');
+
+			const token = lexer.nextToken();
+
+			expect(token.type).toMatch(ValidToken.IDENTIFIER);
+			expect(token.value).toMatch('variable');
 		});
 	});
 
@@ -453,6 +467,14 @@ describe('Lexer', () => {
 				expect(token.type).toMatch(ValidToken.IMPORT);
 			});
 
+			it('export', () => {
+				lexer.reset('export');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.EXPORT);
+			});
+
 			it('enum', () => {
 				lexer.reset('enum');
 
@@ -588,130 +610,132 @@ describe('Lexer', () => {
 
 				expect(token.type).toMatch(ValidToken.PACKAGE);
 			});
+
+			it('as', () => {
+				lexer.reset('as');
+
+				const token = lexer.nextToken();
+
+				expect(token.type).toMatch(ValidToken.AS);
+			});
 		});
 
-		// Describe('Contextual keywords', () => {
-		// 	it('of', () => {
-		// 		lexer.reset('of');
+		describe('Contextual keywords', () => {
+			it('of', () => {
+				lexer.reset('of');
 
-		// 		const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-		// 		expect(token.type).toMatch(ValidToken.OF);
-		// 	});
+				expect(token.type).toMatch(ValidToken.OF);
+			});
 
-		// 	it('get', () => {
-		// 		lexer.reset('get');
+			it('get', () => {
+				lexer.reset('get');
 
-		// 		const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-		// 		expect(token.type).toMatch(ValidToken.GET);
-		// 	});
+				expect(token.type).toMatch(ValidToken.GET);
+			});
 
-		// 	it('set', () => {
-		// 		lexer.reset('set');
+			it('set', () => {
+				lexer.reset('set');
 
-		// 		const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-		// 		expect(token.type).toMatch(ValidToken.SET);
-		// 	});
+				expect(token.type).toMatch(ValidToken.SET);
+			});
 
-		// 	it('any', () => {
-		// 		lexer.reset('any');
+			it('any', () => {
+				lexer.reset('any');
 
-		// 		const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-		// 		expect(token.type).toMatch(ValidToken.TYPE);
-		// 		expect(token.value).toMatch('any');
-		// 	});
+				expect(token.type).toMatch(ValidToken.TYPE);
+				expect(token.value).toMatch('any');
+			});
 
-		// 	it('string', () => {
-		// 		lexer.reset('string');
+			it('string', () => {
+				lexer.reset('string');
 
-		// 		const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-		// 		expect(token.type).toMatch(ValidToken.TYPE);
-		// 		expect(token.value).toMatch('string');
-		// 	});
-		// 	it('number', () => {
-		// 		lexer.reset('number');
+				expect(token.type).toMatch(ValidToken.TYPE);
+				expect(token.value).toMatch('string');
+			});
+			it('number', () => {
+				lexer.reset('number');
 
-		// 		const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-		// 		expect(token.type).toMatch(ValidToken.TYPE);
-		// 		expect(token.value).toMatch('number');
-		// 	});
+				expect(token.type).toMatch(ValidToken.TYPE);
+				expect(token.value).toMatch('number');
+			});
 
-		// 	it('boolean', () => {
-		// 		lexer.reset('boolean');
+			it('boolean', () => {
+				lexer.reset('boolean');
 
-		// 		const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-		// 		expect(token.type).toMatch(ValidToken.TYPE);
-		// 		expect(token.value).toMatch('boolean');
-		// 	});
+				expect(token.type).toMatch(ValidToken.TYPE);
+				expect(token.value).toMatch('boolean');
+			});
 
-		// 	it('symbol', () => {
-		// 		lexer.reset('symbol');
+			it('symbol', () => {
+				lexer.reset('symbol');
 
-		// 		const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-		// 		expect(token.type).toMatch(ValidToken.TYPE);
-		// 		expect(token.value).toMatch('symbol');
-		// 	});
+				expect(token.type).toMatch(ValidToken.TYPE);
+				expect(token.value).toMatch('symbol');
+			});
 
-		// 	it('declare', () => {
-		// 		lexer.reset('declare');
+			it('declare', () => {
+				lexer.reset('declare');
 
-		// 		const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-		// 		expect(token.type).toMatch(ValidToken.DECLARE);
-		// 	});
+				expect(token.type).toMatch(ValidToken.DECLARE);
+			});
 
-		// 	it('require', () => {
-		// 		lexer.reset('require');
+			it('require', () => {
+				lexer.reset('require');
 
-		// 		const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-		// 		expect(token.type).toMatch(ValidToken.REQUIRE);
-		// 	});
+				expect(token.type).toMatch(ValidToken.REQUIRE);
+			});
 
-		// 	it('from', () => {
-		// 		lexer.reset('from');
+			it('from', () => {
+				lexer.reset('from');
 
-		// 		const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-		// 		expect(token.type).toMatch(ValidToken.FROM);
-		// 	});
+				expect(token.type).toMatch(ValidToken.FROM);
+			});
 
-		// 	it('constructor', () => {
-		// 		lexer.reset('constructor');
+			it('constructor', () => {
+				lexer.reset('constructor');
 
-		// 		const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-		// 		expect(token.type).toMatch(ValidToken.CONSTRUCTOR);
-		// 	});
+				expect(token.type).toMatch(ValidToken.CONSTRUCTOR);
+			});
 
-		// 	it('module', () => {
-		// 		lexer.reset('module');
+			it('module', () => {
+				lexer.reset('module');
 
-		// 		const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-		// 		expect(token.type).toMatch(ValidToken.MODULE);
-		// 	});
+				expect(token.type).toMatch(ValidToken.MODULE);
+			});
 
-		// 	it('type', () => {
-		// 		lexer.reset('type');
+			it('type', () => {
+				lexer.reset('type');
 
-		// 		const token = lexer.nextToken();
+				const token = lexer.nextToken();
 
-		// 		expect(token.type).toMatch(ValidToken.TYPE);
-		// 	});
-		// });
-
-		it('Throws error with unsupported reserved word', () => {
-			lexer.reset('async');
-
-			expect(() => lexer.nextToken()).toThrowError('Invalid Token');
+				expect(token.type).toMatch(ValidToken.TYPE);
+			});
 		});
 	});
 
@@ -722,6 +746,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+			expect(token.value).toMatch('{');
 		});
 
 		it('}', () => {
@@ -730,6 +755,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+			expect(token.value).toMatch('}');
 		});
 
 		it('(', () => {
@@ -738,6 +764,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.OPEN_PAREN);
+			expect(token.value).toMatch('(');
 		});
 
 		it(')', () => {
@@ -746,6 +773,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.CLOSE_PAREN);
+			expect(token.value).toMatch(')');
 		});
 
 		it('[', () => {
@@ -754,6 +782,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.OPEN_BRACKET);
+			expect(token.value).toMatch('[');
 		});
 
 		it(']', () => {
@@ -762,6 +791,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.CLOSE_BRACKET);
+			expect(token.value).toMatch(']');
 		});
 
 		it('.', () => {
@@ -770,6 +800,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.DOT);
+			expect(token.value).toMatch('.');
 		});
 
 		it('...', () => {
@@ -778,6 +809,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.SPREAD);
+			expect(token.value).toMatch('...');
 		});
 
 		it(';', () => {
@@ -786,6 +818,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.SEMICOLON);
+			expect(token.value).toMatch(';');
 		});
 
 		it(':', () => {
@@ -794,6 +827,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.COLON);
+			expect(token.value).toMatch(':');
 		});
 
 		it(',', () => {
@@ -802,6 +836,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.COMMA);
+			expect(token.value).toMatch(',');
 		});
 
 		it('<', () => {
@@ -882,6 +917,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.PLUS);
+			expect(token.value).toMatch('+');
 		});
 
 		it('-', () => {
@@ -890,6 +926,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.MINUS);
+			expect(token.value).toMatch('-');
 		});
 
 		it('*', () => {
@@ -898,6 +935,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.MULTIPLICATION);
+			expect(token.value).toMatch('*');
 		});
 
 		it('%', () => {
@@ -906,6 +944,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.MODULO);
+			expect(token.value).toMatch('%');
 		});
 
 		it('**', () => {
@@ -914,6 +953,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.EXPONENTIATION);
+			expect(token.value).toMatch('**');
 		});
 
 		it('++', () => {
@@ -922,6 +962,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.INCREMENT);
+			expect(token.value).toMatch('++');
 		});
 
 		it('--', () => {
@@ -930,6 +971,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.DECREMENT);
+			expect(token.value).toMatch('--');
 		});
 
 		it('!', () => {
@@ -938,6 +980,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.NEGATION);
+			expect(token.value).toMatch('!');
 		});
 
 		it('<<', () => {
@@ -1008,6 +1051,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.NULL_COALESCING);
+			expect(token.value).toMatch('??');
 		});
 
 		it('?', () => {
@@ -1043,6 +1087,7 @@ describe('Lexer', () => {
 			const token = lexer.nextToken();
 
 			expect(token.type).toMatch(ValidToken.ASSIGNMENT);
+			expect(token.value).toMatch('=');
 		});
 
 		it('+=', () => {
@@ -1207,6 +1252,646 @@ describe('Lexer', () => {
 			expect(token.value).toMatch('/=');
 		});
 	});
+
+	describe('Expressions and Statements', () => {
+		describe('Modules', () => {
+			it('Import members from module', () => {
+				lexer.reset("import { member as 'alias', member2, default as Alias } from 'module'");
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(14);
+				expect(tokens[0].type).toMatch(ValidToken.IMPORT);
+				expect(tokens[1].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+				expect(tokens[2].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[2].value).toMatch('member');
+				expect(tokens[3].type).toMatch(ValidToken.AS);
+				expect(tokens[4].type).toMatch(ValidToken.STRING_LITERAL);
+				expect(tokens[4].value).toMatch("'alias'");
+				expect(tokens[5].type).toMatch(ValidToken.COMMA);
+				expect(tokens[6].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[6].value).toMatch('member2');
+				expect(tokens[7].type).toMatch(ValidToken.COMMA);
+				expect(tokens[8].type).toMatch(ValidToken.DEFAULT);
+				expect(tokens[9].type).toMatch(ValidToken.AS);
+				expect(tokens[10].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[10].value).toMatch('Alias');
+				expect(tokens[11].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+				expect(tokens[12].type).toMatch(ValidToken.FROM);
+				expect(tokens[13].type).toMatch(ValidToken.STRING_LITERAL);
+				expect(tokens[13].value).toMatch("'module'");
+			});
+
+			it('Import everything from module with alias', () => {
+				lexer.reset("import * as Alias from 'module'");
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(6);
+				expect(tokens[0].type).toMatch(ValidToken.IMPORT);
+				expect(tokens[1].type).toMatch(ValidToken.MULTIPLICATION);
+				expect(tokens[2].type).toMatch(ValidToken.AS);
+				expect(tokens[3].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[3].value).toMatch('Alias');
+				expect(tokens[4].type).toMatch(ValidToken.FROM);
+				expect(tokens[5].type).toMatch(ValidToken.STRING_LITERAL);
+				expect(tokens[5].value).toMatch("'module'");
+			});
+
+			it('Export statement', () => {
+				lexer.reset(`
+					export default fn;	
+				`);
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(4);
+
+				expect(tokens[0].type).toMatch(ValidToken.EXPORT);
+			});
+		});
+
+		describe('Variable declaration', () => {
+			it('let', () => {
+				lexer.reset('let variable: number = 5;');
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(7);
+				expect(tokens[0].type).toMatch(ValidToken.LET);
+				expect(tokens[1].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[1].value).toMatch('variable');
+				expect(tokens[2].type).toMatch(ValidToken.COLON);
+				expect(tokens[3].type).toMatch(ValidToken.TYPE);
+				expect(tokens[3].value).toMatch('number');
+				expect(tokens[4].type).toMatch(ValidToken.ASSIGNMENT);
+				expect(tokens[5].type).toMatch(ValidToken.NUMERIC_LITERAL);
+				expect(tokens[5].value).toMatch('5');
+				expect(tokens[6].type).toMatch(ValidToken.SEMICOLON);
+			});
+
+			it('const', () => {
+				lexer.reset('const variable: string = "string";');
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(7);
+				expect(tokens[0].type).toMatch(ValidToken.CONST);
+				expect(tokens[1].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[1].value).toMatch('variable');
+				expect(tokens[2].type).toMatch(ValidToken.COLON);
+				expect(tokens[3].type).toMatch(ValidToken.TYPE);
+				expect(tokens[3].value).toMatch('string');
+				expect(tokens[4].type).toMatch(ValidToken.ASSIGNMENT);
+				expect(tokens[5].type).toMatch(ValidToken.STRING_LITERAL);
+				expect(tokens[5].value).toMatch('"string"');
+				expect(tokens[6].type).toMatch(ValidToken.SEMICOLON);
+			});
+
+			it('var', () => {
+				lexer.reset('var variable: boolean = true;');
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(7);
+				expect(tokens[0].type).toMatch(ValidToken.VAR);
+				expect(tokens[1].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[1].value).toMatch('variable');
+				expect(tokens[2].type).toMatch(ValidToken.COLON);
+				expect(tokens[3].type).toMatch(ValidToken.TYPE);
+				expect(tokens[3].value).toMatch('boolean');
+				expect(tokens[4].type).toMatch(ValidToken.ASSIGNMENT);
+				expect(tokens[5].type).toMatch(ValidToken.BOOLEAN);
+				expect(tokens[5].value).toMatch('true');
+				expect(tokens[6].type).toMatch(ValidToken.SEMICOLON);
+			});
+		});
+
+		describe('Iteration statements', () => {
+			it('for', () => {
+				lexer.reset(`
+						for(let i = 0; i < 5; i++) {
+							console.log(i);
+						}
+					`);
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(23);
+				expect(tokens[0].type).toMatch(ValidToken.FOR);
+				expect(tokens[1].type).toMatch(ValidToken.OPEN_PAREN);
+				expect(tokens[2].type).toMatch(ValidToken.LET);
+				expect(tokens[3].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[3].value).toMatch('i');
+				expect(tokens[4].type).toMatch(ValidToken.ASSIGNMENT);
+				expect(tokens[5].type).toMatch(ValidToken.NUMERIC_LITERAL);
+				expect(tokens[5].value).toMatch('0');
+				expect(tokens[6].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[7].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[7].value).toMatch('i');
+				expect(tokens[8].type).toMatch(ValidToken.COMPARISON_OP);
+				expect(tokens[8].value).toMatch('<');
+				expect(tokens[9].type).toMatch(ValidToken.NUMERIC_LITERAL);
+				expect(tokens[9].value).toMatch('5');
+				expect(tokens[10].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[11].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[11].value).toMatch('i');
+				expect(tokens[12].type).toMatch(ValidToken.INCREMENT);
+				expect(tokens[13].type).toMatch(ValidToken.CLOSE_PAREN);
+				expect(tokens[14].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+				expect(tokens[15].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[15].value).toMatch('console');
+				expect(tokens[16].type).toMatch(ValidToken.DOT);
+				expect(tokens[17].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[17].value).toMatch('log');
+				expect(tokens[18].type).toMatch(ValidToken.OPEN_PAREN);
+				expect(tokens[19].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[19].value).toMatch('i');
+				expect(tokens[20].type).toMatch(ValidToken.CLOSE_PAREN);
+				expect(tokens[21].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[22].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+			});
+
+			it('while', () => {
+				lexer.reset(`
+						while (i >= -1_000) {
+							console.log(i);
+							i--;
+							continue;
+						}
+					`);
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(20);
+				expect(tokens[0].type).toMatch(ValidToken.WHILE);
+				expect(tokens[1].type).toMatch(ValidToken.OPEN_PAREN);
+				expect(tokens[2].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[2].value).toMatch('i');
+				expect(tokens[3].type).toMatch(ValidToken.COMPARISON_OP);
+				expect(tokens[3].value).toMatch('>=');
+				expect(tokens[4].type).toMatch(ValidToken.NUMERIC_LITERAL);
+				expect(tokens[4].value).toMatch('-1_000');
+				expect(tokens[5].type).toMatch(ValidToken.CLOSE_PAREN);
+				expect(tokens[6].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+				expect(tokens[7].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[7].value).toMatch('console');
+				expect(tokens[8].type).toMatch(ValidToken.DOT);
+				expect(tokens[9].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[9].value).toMatch('log');
+				expect(tokens[10].type).toMatch(ValidToken.OPEN_PAREN);
+				expect(tokens[11].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[11].value).toMatch('i');
+				expect(tokens[12].type).toMatch(ValidToken.CLOSE_PAREN);
+				expect(tokens[13].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[14].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[14].value).toMatch('i');
+				expect(tokens[15].type).toMatch(ValidToken.DECREMENT);
+				expect(tokens[16].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[17].type).toMatch(ValidToken.CONTINUE);
+				expect(tokens[18].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[19].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+			});
+
+			it('do-while', () => {
+				lexer.reset(`
+						do {
+							a = a + 1;
+							b = b - 2;
+							break;
+						} while (a === b && b != 10_100_000);
+					`);
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(28);
+				expect(tokens[0].type).toMatch(ValidToken.DO);
+				expect(tokens[1].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+				expect(tokens[2].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[2].value).toMatch('a');
+				expect(tokens[3].type).toMatch(ValidToken.ASSIGNMENT);
+				expect(tokens[4].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[4].value).toMatch('a');
+				expect(tokens[5].type).toMatch(ValidToken.PLUS);
+				expect(tokens[6].type).toMatch(ValidToken.NUMERIC_LITERAL);
+				expect(tokens[6].value).toMatch('1');
+				expect(tokens[7].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[8].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[8].value).toMatch('b');
+				expect(tokens[9].type).toMatch(ValidToken.ASSIGNMENT);
+				expect(tokens[10].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[10].value).toMatch('b');
+				expect(tokens[11].type).toMatch(ValidToken.MINUS);
+				expect(tokens[12].type).toMatch(ValidToken.NUMERIC_LITERAL);
+				expect(tokens[12].value).toMatch('2');
+				expect(tokens[13].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[14].type).toMatch(ValidToken.BREAK);
+				expect(tokens[15].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[16].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+				expect(tokens[17].type).toMatch(ValidToken.WHILE);
+				expect(tokens[18].type).toMatch(ValidToken.OPEN_PAREN);
+				expect(tokens[19].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[19].value).toMatch('a');
+				expect(tokens[20].type).toMatch(ValidToken.COMPARISON_OP);
+				expect(tokens[20].value).toMatch('===');
+				expect(tokens[21].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[21].value).toMatch('b');
+				expect(tokens[22].type).toMatch(ValidToken.LOGICAL_OP);
+				expect(tokens[22].value).toMatch('&&');
+				expect(tokens[23].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[23].value).toMatch('b');
+				expect(tokens[24].type).toMatch(ValidToken.COMPARISON_OP);
+				expect(tokens[24].value).toMatch('!=');
+				expect(tokens[25].type).toMatch(ValidToken.NUMERIC_LITERAL);
+				expect(tokens[25].value).toMatch('10_100_000');
+				expect(tokens[26].type).toMatch(ValidToken.CLOSE_PAREN);
+				expect(tokens[27].type).toMatch(ValidToken.SEMICOLON);
+			});
+
+			it('for-of', () => {
+				lexer.reset(`
+						for (let el of array)	{
+							const variable: object = { el };
+						}
+					`);
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(18);
+				expect(tokens[0].type).toMatch(ValidToken.FOR);
+				expect(tokens[1].type).toMatch(ValidToken.OPEN_PAREN);
+				expect(tokens[2].type).toMatch(ValidToken.LET);
+				expect(tokens[3].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[3].value).toMatch('el');
+				expect(tokens[4].type).toMatch(ValidToken.OF);
+				expect(tokens[5].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[5].value).toMatch('array');
+				expect(tokens[6].type).toMatch(ValidToken.CLOSE_PAREN);
+				expect(tokens[7].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+				expect(tokens[8].type).toMatch(ValidToken.CONST);
+				expect(tokens[9].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[9].value).toMatch('variable');
+				expect(tokens[10].type).toMatch(ValidToken.COLON);
+				expect(tokens[11].type).toMatch(ValidToken.TYPE);
+				expect(tokens[11].value).toMatch('object');
+				expect(tokens[12].type).toMatch(ValidToken.ASSIGNMENT);
+				expect(tokens[13].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+				expect(tokens[14].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[14].value).toMatch('el');
+				expect(tokens[15].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+				expect(tokens[16].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[17].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+			});
+
+			it('for-in', () => {
+				lexer.reset(`
+						for (let el in array)	{ el + 1; }
+					`);
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(13);
+				expect(tokens[0].type).toMatch(ValidToken.FOR);
+				expect(tokens[1].type).toMatch(ValidToken.OPEN_PAREN);
+				expect(tokens[2].type).toMatch(ValidToken.LET);
+				expect(tokens[3].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[3].value).toMatch('el');
+				expect(tokens[4].type).toMatch(ValidToken.IN);
+				expect(tokens[5].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[5].value).toMatch('array');
+				expect(tokens[6].type).toMatch(ValidToken.CLOSE_PAREN);
+				expect(tokens[7].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+				expect(tokens[8].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[8].value).toMatch('el');
+				expect(tokens[9].type).toMatch(ValidToken.PLUS);
+				expect(tokens[10].type).toMatch(ValidToken.NUMERIC_LITERAL);
+				expect(tokens[10].value).toMatch('1');
+				expect(tokens[11].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[12].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+			});
+		});
+
+		describe('if Statement', () => {
+			it('if-else', () => {
+				lexer.reset(`
+						if (a >= 3)	{
+							// Do nothing
+						} else a += 2;
+					`);
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(14);
+				expect(tokens[0].type).toMatch(ValidToken.IF);
+				expect(tokens[1].type).toMatch(ValidToken.OPEN_PAREN);
+				expect(tokens[2].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[2].value).toMatch('a');
+				expect(tokens[3].type).toMatch(ValidToken.COMPARISON_OP);
+				expect(tokens[3].value).toMatch('>=');
+				expect(tokens[4].type).toMatch(ValidToken.NUMERIC_LITERAL);
+				expect(tokens[4].value).toMatch('3');
+				expect(tokens[5].type).toMatch(ValidToken.CLOSE_PAREN);
+				expect(tokens[6].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+				expect(tokens[7].type).toMatch(ValidToken.SINGLE_LINE_COMMENT);
+				expect(tokens[7].value).toMatch('// Do nothing');
+				expect(tokens[8].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+				expect(tokens[9].type).toMatch(ValidToken.ELSE);
+				expect(tokens[10].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[10].value).toMatch('a');
+				expect(tokens[11].type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+				expect(tokens[11].value).toMatch('+=');
+				expect(tokens[12].type).toMatch(ValidToken.NUMERIC_LITERAL);
+				expect(tokens[12].value).toMatch('2');
+				expect(tokens[13].type).toMatch(ValidToken.SEMICOLON);
+			});
+		});
+
+		it('switch Statement', () => {
+			lexer.reset(`
+					switch(a) {
+						case 6:
+							a **= 2;
+							break;
+						default:
+							break;
+					}
+				`);
+
+			const tokens = getTokens(lexer);
+
+			expect(tokens.length).toBe(19);
+			expect(tokens[0].type).toMatch(ValidToken.SWITCH);
+			expect(tokens[1].type).toMatch(ValidToken.OPEN_PAREN);
+			expect(tokens[2].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[2].value).toMatch('a');
+			expect(tokens[3].type).toMatch(ValidToken.CLOSE_PAREN);
+			expect(tokens[4].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+			expect(tokens[5].type).toMatch(ValidToken.CASE);
+			expect(tokens[6].type).toMatch(ValidToken.NUMERIC_LITERAL);
+			expect(tokens[6].value).toMatch('6');
+			expect(tokens[7].type).toMatch(ValidToken.COLON);
+			expect(tokens[8].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[8].value).toMatch('a');
+			expect(tokens[9].type).toMatch(ValidToken.COMPOUND_ASSIGNMENT);
+			expect(tokens[9].value).toMatch('**=');
+			expect(tokens[10].type).toMatch(ValidToken.NUMERIC_LITERAL);
+			expect(tokens[10].value).toMatch('2');
+			expect(tokens[11].type).toMatch(ValidToken.SEMICOLON);
+			expect(tokens[12].type).toMatch(ValidToken.BREAK);
+			expect(tokens[13].type).toMatch(ValidToken.SEMICOLON);
+			expect(tokens[14].type).toMatch(ValidToken.DEFAULT);
+			expect(tokens[15].type).toMatch(ValidToken.COLON);
+			expect(tokens[16].type).toMatch(ValidToken.BREAK);
+			expect(tokens[17].type).toMatch(ValidToken.SEMICOLON);
+			expect(tokens[18].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+		});
+
+		it('try Statement', () => {
+			lexer.reset(`
+					try {
+						const $var1: symbol = new Symbol();
+					}	catch (e) {
+						/* Nothing */
+					} finally {
+						close();
+					}
+				`);
+
+			const tokens = getTokens(lexer);
+
+			expect(tokens.length).toBe(27);
+			expect(tokens[0].type).toMatch(ValidToken.TRY);
+			expect(tokens[1].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+			expect(tokens[2].type).toMatch(ValidToken.CONST);
+			expect(tokens[3].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[3].value).toMatch('$var1');
+			expect(tokens[4].type).toMatch(ValidToken.COLON);
+			expect(tokens[5].type).toMatch(ValidToken.TYPE);
+			expect(tokens[5].value).toMatch('symbol');
+			expect(tokens[6].type).toMatch(ValidToken.ASSIGNMENT);
+			expect(tokens[7].type).toMatch(ValidToken.NEW);
+			expect(tokens[8].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[8].value).toMatch('Symbol');
+			expect(tokens[9].type).toMatch(ValidToken.OPEN_PAREN);
+			expect(tokens[10].type).toMatch(ValidToken.CLOSE_PAREN);
+			expect(tokens[11].type).toMatch(ValidToken.SEMICOLON);
+			expect(tokens[12].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+			expect(tokens[13].type).toMatch(ValidToken.CATCH);
+			expect(tokens[14].type).toMatch(ValidToken.OPEN_PAREN);
+			expect(tokens[15].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[15].value).toMatch('e');
+			expect(tokens[16].type).toMatch(ValidToken.CLOSE_PAREN);
+			expect(tokens[17].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+			expect(tokens[18].type).toMatch(ValidToken.MULTI_LINE_COMMENT);
+			expect(tokens[18].value).toMatch('/* Nothing */');
+			expect(tokens[19].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+			expect(tokens[20].type).toMatch(ValidToken.FINALLY);
+			expect(tokens[21].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+			expect(tokens[22].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[22].value).toMatch('close');
+			expect(tokens[23].type).toMatch(ValidToken.OPEN_PAREN);
+			expect(tokens[24].type).toMatch(ValidToken.CLOSE_PAREN);
+			expect(tokens[25].type).toMatch(ValidToken.SEMICOLON);
+			expect(tokens[26].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+		});
+
+		it('declare Statement', () => {
+			lexer.reset(`
+					declare StringOrNull = string | null;
+				`);
+
+			const tokens = getTokens(lexer);
+
+			expect(tokens.length).toBe(7);
+			expect(tokens[0].type).toMatch(ValidToken.DECLARE);
+			expect(tokens[1].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[1].value).toMatch('StringOrNull');
+			expect(tokens[2].type).toMatch(ValidToken.ASSIGNMENT);
+			expect(tokens[3].type).toMatch(ValidToken.TYPE);
+			expect(tokens[3].value).toMatch('string');
+			expect(tokens[4].type).toMatch(ValidToken.BITWISE_OP);
+			expect(tokens[4].value).toMatch('|');
+			expect(tokens[5].type).toMatch(ValidToken.NULL_LITERAL);
+			expect(tokens[6].type).toMatch(ValidToken.SEMICOLON);
+		});
+
+		it('interface Statement', () => {
+			lexer.reset(`
+					interface User {
+						name: string;
+						active: boolean;
+					}
+				`);
+
+			const tokens = getTokens(lexer);
+
+			expect(tokens.length).toBe(12);
+			expect(tokens[0].type).toMatch(ValidToken.INTERFACE);
+			expect(tokens[1].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[1].value).toMatch('User');
+			expect(tokens[2].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+			expect(tokens[3].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[3].value).toMatch('name');
+			expect(tokens[4].type).toMatch(ValidToken.COLON);
+			expect(tokens[5].type).toMatch(ValidToken.TYPE);
+			expect(tokens[5].value).toMatch('string');
+			expect(tokens[6].type).toMatch(ValidToken.SEMICOLON);
+			expect(tokens[7].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[7].value).toMatch('active');
+			expect(tokens[8].type).toMatch(ValidToken.COLON);
+			expect(tokens[9].type).toMatch(ValidToken.TYPE);
+			expect(tokens[9].value).toMatch('boolean');
+			expect(tokens[10].type).toMatch(ValidToken.SEMICOLON);
+			expect(tokens[11].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+		});
+
+		describe('Functions', () => {
+			it('function definition', () => {
+				lexer.reset(`
+					function(one: string, two: number){
+						return one + two;	
+					}
+				`);
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(17);
+				expect(tokens[0].type).toMatch(ValidToken.FUNCTION);
+				expect(tokens[1].type).toMatch(ValidToken.OPEN_PAREN);
+				expect(tokens[2].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[2].value).toMatch('one');
+				expect(tokens[3].type).toMatch(ValidToken.COLON);
+				expect(tokens[4].type).toMatch(ValidToken.TYPE);
+				expect(tokens[4].value).toMatch('string');
+				expect(tokens[5].type).toMatch(ValidToken.COMMA);
+				expect(tokens[6].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[6].value).toMatch('two');
+				expect(tokens[7].type).toMatch(ValidToken.COLON);
+				expect(tokens[8].type).toMatch(ValidToken.TYPE);
+				expect(tokens[8].value).toMatch('number');
+				expect(tokens[9].type).toMatch(ValidToken.CLOSE_PAREN);
+				expect(tokens[10].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+				expect(tokens[11].type).toMatch(ValidToken.RETURN);
+				expect(tokens[12].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[12].value).toMatch('one');
+				expect(tokens[13].type).toMatch(ValidToken.PLUS);
+				expect(tokens[14].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[14].value).toMatch('two');
+				expect(tokens[15].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[16].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+			});
+
+			it('Arrow Function', () => {
+				lexer.reset(`
+						const fn = (...obj: object) = { return null; };
+					`);
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(16);
+				expect(tokens[0].type).toMatch(ValidToken.CONST);
+				expect(tokens[1].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[1].value).toMatch('fn');
+				expect(tokens[2].type).toMatch(ValidToken.ASSIGNMENT);
+				expect(tokens[3].type).toMatch(ValidToken.OPEN_PAREN);
+				expect(tokens[4].type).toMatch(ValidToken.SPREAD);
+				expect(tokens[5].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[5].value).toMatch('obj');
+				expect(tokens[6].type).toMatch(ValidToken.COLON);
+				expect(tokens[7].type).toMatch(ValidToken.TYPE);
+				expect(tokens[7].value).toMatch('object');
+				expect(tokens[8].type).toMatch(ValidToken.CLOSE_PAREN);
+				expect(tokens[9].type).toMatch(ValidToken.ASSIGNMENT);
+				expect(tokens[10].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+				expect(tokens[11].type).toMatch(ValidToken.RETURN);
+				expect(tokens[12].type).toMatch(ValidToken.NULL_LITERAL);
+				expect(tokens[13].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[14].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+				expect(tokens[15].type).toMatch(ValidToken.SEMICOLON);
+			});
+
+			it('Methods', () => {
+				lexer.reset(`
+						get val1() { return null; }
+						set val2() { return null; }
+					`);
+
+				const tokens = getTokens(lexer);
+
+				expect(tokens.length).toBe(18);
+				expect(tokens[0].type).toMatch(ValidToken.GET);
+				expect(tokens[1].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[1].value).toMatch('val1');
+				expect(tokens[2].type).toMatch(ValidToken.OPEN_PAREN);
+				expect(tokens[3].type).toMatch(ValidToken.CLOSE_PAREN);
+				expect(tokens[4].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+				expect(tokens[5].type).toMatch(ValidToken.RETURN);
+				expect(tokens[6].type).toMatch(ValidToken.NULL_LITERAL);
+				expect(tokens[7].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[8].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+				expect(tokens[9].type).toMatch(ValidToken.SET);
+				expect(tokens[10].type).toMatch(ValidToken.IDENTIFIER);
+				expect(tokens[10].value).toMatch('val2');
+				expect(tokens[11].type).toMatch(ValidToken.OPEN_PAREN);
+				expect(tokens[12].type).toMatch(ValidToken.CLOSE_PAREN);
+				expect(tokens[13].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+				expect(tokens[14].type).toMatch(ValidToken.RETURN);
+				expect(tokens[15].type).toMatch(ValidToken.NULL_LITERAL);
+				expect(tokens[16].type).toMatch(ValidToken.SEMICOLON);
+				expect(tokens[17].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+			});
+		});
+
+		it('Classes', () => {
+			lexer.reset(`
+					class Test implements SC {
+						constructor() {
+							super();
+							this._a = false;
+						}
+					}	
+				`);
+
+			const tokens = getTokens(lexer);
+
+			expect(tokens.length).toBe(21);
+			expect(tokens[0].type).toMatch(ValidToken.CLASS);
+			expect(tokens[1].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[1].value).toMatch('Test');
+			expect(tokens[2].type).toMatch(ValidToken.IMPLEMENTS);
+			expect(tokens[3].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[3].value).toMatch('SC');
+			expect(tokens[4].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+			expect(tokens[5].type).toMatch(ValidToken.CONSTRUCTOR);
+			expect(tokens[6].type).toMatch(ValidToken.OPEN_PAREN);
+			expect(tokens[7].type).toMatch(ValidToken.CLOSE_PAREN);
+			expect(tokens[8].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+			expect(tokens[9].type).toMatch(ValidToken.SUPER);
+			expect(tokens[10].type).toMatch(ValidToken.OPEN_PAREN);
+			expect(tokens[11].type).toMatch(ValidToken.CLOSE_PAREN);
+			expect(tokens[12].type).toMatch(ValidToken.SEMICOLON);
+			expect(tokens[13].type).toMatch(ValidToken.THIS);
+			expect(tokens[14].type).toMatch(ValidToken.DOT);
+			expect(tokens[15].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[15].value).toMatch('_a');
+			expect(tokens[16].type).toMatch(ValidToken.ASSIGNMENT);
+			expect(tokens[17].type).toMatch(ValidToken.BOOLEAN);
+			expect(tokens[17].value).toMatch('false');
+			expect(tokens[18].type).toMatch(ValidToken.SEMICOLON);
+			expect(tokens[19].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+			expect(tokens[20].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+		});
+	});
+
+	it('There is only one EOF token', () => {
+		lexer.reset(`
+				let var1 = 5;	
+			`);
+
+		getTokens(lexer);
+
+		expect(lexer.nextToken()).toBe(lexer.eofToken);
+	});
 });
 
 const expectNumericLiteral = (lexer: Lexer, input: string, expectedTokenType: ValidToken, expectedTokenValue: string) => {
@@ -1221,4 +1906,16 @@ const expectNumericLiteral = (lexer: Lexer, input: string, expectedTokenType: Va
 const expectLexerToThrow = (lexer: Lexer, input: string) => {
 	lexer.reset(input);
 	expect(() => lexer.nextToken()).toThrow();
+};
+
+const getTokens = (lexer: Lexer) => {
+	const tokens: Token[] = [];
+	let token = lexer.nextToken();
+
+	while (token !== lexer.eofToken) {
+		tokens.push(token);
+		token = lexer.nextToken();
+	}
+
+	return tokens;
 };

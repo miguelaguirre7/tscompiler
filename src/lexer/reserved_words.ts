@@ -2,7 +2,7 @@ import { ValidToken, Token } from '../token';
 
 interface ReservedWordsMap {
 	always: Map<ReservedWord, () => Token>;
-	context: Map<ContextualKeywords, () => Token>;
+	contextual: Map<ContextualKeywords, () => Token>;
 }
 
 const reservedWords: ReservedWordsMap = {
@@ -41,6 +41,7 @@ const reservedWords: ReservedWordsMap = {
 		['super', () => new Token(ValidToken.SUPER)],
 		['finally', () => new Token(ValidToken.FINALLY)],
 		['import', () => new Token(ValidToken.IMPORT)],
+		['export', () => new Token(ValidToken.EXPORT)],
 		['enum', () => new Token(ValidToken.ENUM)],
 		['this', () => new Token(ValidToken.THIS)],
 		['throw', () => new Token(ValidToken.THROW)],
@@ -50,8 +51,9 @@ const reservedWords: ReservedWordsMap = {
 		['static', () => new Token(ValidToken.STATIC)],
 		['implements', () => new Token(ValidToken.IMPLEMENTS)],
 		['package', () => new Token(ValidToken.PACKAGE)],
+		['as', () => new Token(ValidToken.AS)],
 	]),
-	context: new Map([
+	contextual: new Map([
 		['of', () => new Token(ValidToken.OF)],
 		['get', () => new Token(ValidToken.GET)],
 		['set', () => new Token(ValidToken.SET)],

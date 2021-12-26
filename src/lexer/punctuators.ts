@@ -1,6 +1,6 @@
 import { Token, ValidToken } from '../token';
 
-const operators: Map<Punctuator, () => Token> = new Map([
+const punctuators: Map<Punctuator, () => Token> = new Map([
 	['+', () => new Token(ValidToken.PLUS, '+')],
 	['-', () => new Token(ValidToken.MINUS, '-')],
 	['*', () => new Token(ValidToken.MULTIPLICATION, '*')],
@@ -9,7 +9,7 @@ const operators: Map<Punctuator, () => Token> = new Map([
 	['--', () => new Token(ValidToken.DECREMENT, '--')],
 	['**', () => new Token(ValidToken.EXPONENTIATION, '**')],
 	['%', () => new Token(ValidToken.MODULO, '%')],
-	['=', () => new Token(ValidToken.ASSIGNMENT, '+')],
+	['=', () => new Token(ValidToken.ASSIGNMENT, '=')],
 	['+=', () => new Token(ValidToken.COMPOUND_ASSIGNMENT, '+=')],
 	['-=', () => new Token(ValidToken.COMPOUND_ASSIGNMENT, '-=')],
 	['*=', () => new Token(ValidToken.COMPOUND_ASSIGNMENT, '*=')],
@@ -51,4 +51,4 @@ const operators: Map<Punctuator, () => Token> = new Map([
 	['?.', () => new Token(ValidToken.OPTIONAL_CHAINING, '?.')],
 ]);
 
-export default operators;
+export default punctuators;
