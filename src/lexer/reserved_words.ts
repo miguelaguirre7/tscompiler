@@ -1,4 +1,5 @@
 import { ValidToken, Token } from '../token';
+import { ContextualKeywords, ReservedWord } from '../types';
 
 interface ReservedWordsMap {
 	always: Map<ReservedWord, () => Token>;

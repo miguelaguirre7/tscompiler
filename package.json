@@ -5,13 +5,13 @@
   "main": "",
   "scripts": {
     "compile": "tsc --noEmit",
-    "build": "npm run lint && npm run test && tsc",
+    "build": "rm -rf build/ && npm run lint && npm run test && tsc",
     "format": "prettier -w src/**/*.ts",
     "format:check": "prettier --list-different src/**/*.ts",
     "lint": "xo",
     "lint:fix": "xo --fix",
-    "precommit": "npm run lint && npm run test",
-    "test": "jest",
+    "precommit": "npm run lint && npm run test && npm run compile",
+    "test": "NODE_ENV=test jest",
     "prepare": "husky install"
   },
   "keywords": [],
@@ -28,10 +28,12 @@
     "husky": "^7.0.0",
     "jest": "^27.3.1",
     "prettier": "^2.4.1",
+    "ts-jest": "^27.1.2",
     "typescript": "^4.4.4",
     "xo": "^0.47.0"
   },
   "dependencies": {
+    "chalk": "^4.1.2",
     "ts-node": "^10.4.0"
   }
 }

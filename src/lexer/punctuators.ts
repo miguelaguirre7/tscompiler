@@ -1,4 +1,5 @@
 import { Token, ValidToken } from '../token';
+import { Punctuator } from '../types';
 
 const punctuators: Map<Punctuator, () => Token> = new Map([
 	['+', () => new Token(ValidToken.PLUS, '+')],

@@ -1,4 +1,5 @@
 /* eslint-disable jest/expect-expect, @typescript-eslint/quotes */
+import { Errors } from '../src/error';
 import { Lexer } from '../src/lexer';
 import { Token, ValidToken } from '../src/token';
 
@@ -20,7 +21,7 @@ describe('Lexer', () => {
 			});
 
 			it('Does not allow separator at the end', () => {
-				expectLexerToThrow(lexer, '5243237_');
+				expectInvalidToken(lexer, '5243237_', Errors.Numeric_separator_not_allowed);
 			});
 
 			it('Allows number 0', () => {
@@ -28,7 +29,7 @@ describe('Lexer', () => {
 			});
 
 			it('Does not allow a number literal that starts with 0', () => {
-				expectLexerToThrow(lexer, '053742357');
+				expectInvalidToken(lexer, '053742357', Errors.Octal_literals_not_supported);
 			});
 
 			it('Recognizes a number with a trailing decimal point', () => {
@@ -48,15 +49,15 @@ describe('Lexer', () => {
 			});
 
 			it('Does not allow separators at the end of the integral part', () => {
-				expectLexerToThrow(lexer, '5742_.75432');
+				expectInvalidToken(lexer, '5_.75432', Errors.Numeric_separator_not_allowed);
 			});
 
 			it('Does not allow separators at the end of the fractional part', () => {
-				expectLexerToThrow(lexer, '5742.75432_');
+				expectInvalidToken(lexer, '5742.75432_', Errors.Numeric_separator_not_allowed);
 			});
 
 			it('Does not allow separators at the beginning of the fractional part', () => {
-				expectLexerToThrow(lexer, '5742._75432');
+				expectInvalidToken(lexer, '5742._75432', Errors.Numeric_separator_not_allowed);
 			});
 
 			it('Recognizes multiple numbers', () => {
@@ -80,6 +81,10 @@ describe('Lexer', () => {
 				expect(token5.value).toMatch('76_5342.2');
 			});
 
+			it('Does not allow multiple numeric separators', () => {
+				expectInvalidToken(lexer, '95__532', Errors.Multiple_numeric_separators_not_allowed);
+			});
+
 			describe('Signed Integers', () => {
 				describe('Positive', () => {
 					it('Recognizes positive signed integers', () => {
@@ -91,7 +96,7 @@ describe('Lexer', () => {
 					});
 
 					it('Does not allow separators at the end of a positive signed integer', () => {
-						expectLexerToThrow(lexer, '+1124_');
+						expectInvalidToken(lexer, '+1124_', Errors.Numeric_separator_not_allowed);
 					});
 				});
 
@@ -105,7 +110,7 @@ describe('Lexer', () => {
 					});
 
 					it('Does not allow separators at the end of a negative signed integer', () => {
-						expectLexerToThrow(lexer, '-1124_');
+						expectInvalidToken(lexer, '-1124_', Errors.Numeric_separator_not_allowed);
 					});
 				});
 			});
@@ -146,33 +151,21 @@ describe('Lexer', () => {
 				expect(token.value).toMatch('""');
 			});
 
-			it('Throws an error with an incomplete string', () => {
-				lexer.reset("'string' identifier'");
-				const token = lexer.nextToken();
-
-				expect(token.type).toMatch(ValidToken.STRING_LITERAL);
-				expect(token.value).toMatch("'string'");
-
-				const identifier = lexer.nextToken();
-				expect(identifier.type).toMatch(ValidToken.IDENTIFIER);
-				expect(identifier.value).toMatch('identifier');
-
-				expect(() => lexer.nextToken()).toThrowError('Unterminated string literal');
+			it('Recognizes an incomplete string', () => {
+				expectInvalidToken(lexer, "'string\n'", Errors.Unterminated_string_literal);
 			});
 
-			it('Throws an error with invalid characters', () => {
-				lexer.reset("'invalid\\'");
-
-				expect(() => lexer.nextToken()).toThrowError('Unterminated string literal');
+			it('Recognizes unterminated strings with escaped quote', () => {
+				expectInvalidToken(lexer, "'invalid\\'", Errors.Unterminated_string_literal);
 			});
 
 			it('Recognizes character escape sequences', () => {
-				lexer.reset("'This \\\"is\\\" \v a \f \\'string\\' \n with \r new \n lines \b and a \t tab'");
+				lexer.reset("'This \\\"is\\\" \\v a \\f \\'string\\' \\n with \\r new \\n lines \\b and a \\t tab'");
 
 				const token = lexer.nextToken();
 
 				expect(token.type).toMatch(ValidToken.STRING_LITERAL);
-				expect(token.value).toMatch("'This \\\"is\\\" \v a \f \\'string\\' \n with \r new \n lines \b and a \t tab'");
+				expect(token.value).toMatch("'This \\\"is\\\" \\v a \\f \\'string\\' \\n with \\r new \\n lines \\b and a \\t tab'");
 			});
 
 			describe('Unicode Sequence', () => {
@@ -185,22 +178,16 @@ describe('Lexer', () => {
 					expect(token.value).toMatch('"String with a \\u{0056}nicode character"');
 				});
 
-				it('Throws an error with incomplete unicode sequence', () => {
-					lexer.reset('"String with a \\unicode character"');
-
-					expect(() => lexer.nextToken()).toThrowError('Hexadecimal digit expected');
+				it('Recognizes an incomplete unicode sequence', () => {
+					expectInvalidToken(lexer, '"String with a \\unicode character"', Errors.Hexadecimal_digit_expected);
 				});
 
-				it('Throws an error with unclosed brackets in an unicode sequence', () => {
-					lexer.reset('"String with a \\u{anicode character"');
-
-					expect(() => lexer.nextToken()).toThrowError('Unterminated unicode sequence');
+				it('Recognizes unicode sequence with unclosed brackets', () => {
+					expectInvalidToken(lexer, '"String with a \\u{anicode character"', Errors.Unterminated_unicode_escape_sequence);
 				});
 
-				it('Throws an error when the unicode value is out of range', () => {
-					lexer.reset('"String with a \\u{FFFFFF} character"');
-
-					expect(() => lexer.nextToken()).toThrowError('An extended Unicode escape value must be between 0x00 and 0x10FFFF inclusive.');
+				it('Recognizes an out of range unicode value', () => {
+					expectInvalidToken(lexer, '"String with a \\u{FFFFFF} character"', Errors.Unicode_value_out_of_range);
 				});
 			});
 		});
@@ -239,10 +226,8 @@ describe('Lexer', () => {
 				expect(token.value).toMatch('/* This is a \t multi \n line \n comment */');
 			});
 
-			it('Throws an error with a non-terminated comment', () => {
-				lexer.reset('/* Unterminated \n comment ');
-
-				expect(() => lexer.nextToken()).toThrowError('*/ expected.');
+			it('Recognizes a non-terminated comment', () => {
+				expectInvalidToken(lexer, '/* Unterminated \n comment ', Errors.Unterminated_comment);
 			});
 		});
 
@@ -1892,6 +1877,69 @@ describe('Lexer', () => {
 
 		expect(lexer.nextToken()).toBe(lexer.eofToken);
 	});
+
+	it('Keeps track of the current line', () => {
+		lexer.reset(`let a: number = 5;
+			function test() {}
+			test();
+			a += 1;
+		`);
+
+		getTokens(lexer);
+
+		expect(lexer.currentLine).toBe(5);
+	});
+
+	describe('Errors handling', () => {
+		it('Keeps track of each error and their lines', () => {
+			lexer.reset("let a = ';\nconst b = '");
+
+			getTokens(lexer);
+
+			expect(lexer.errors.get(1)).toBeDefined();
+			expect(lexer.errors.get(1)).toBe(Errors.Unterminated_string_literal);
+			expect(lexer.errors.get(2)).toBeDefined();
+			expect(lexer.errors.get(2)).toBe(Errors.Unterminated_string_literal);
+		});
+
+		it('Recognizes errors and subsequent tokens correctly for invalid literals', () => {
+			lexer.reset(`
+				let test = ";
+
+				class Test {
+					constructor() {
+						let invalidNum = 5__5;
+					}
+				}
+			`);
+
+			const tokens = getTokens(lexer);
+
+			expect(tokens.length).toBe(18);
+
+			expect(tokens[0].type).toMatch(ValidToken.LET);
+			expect(tokens[1].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[1].value).toMatch('test');
+			expect(tokens[2].type).toMatch(ValidToken.ASSIGNMENT);
+			expect(tokens[3].type).toMatch(ValidToken.NON_VALID_TOKEN);
+			expect(tokens[4].type).toMatch(ValidToken.CLASS);
+			expect(tokens[5].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[5].value).toMatch('Test');
+			expect(tokens[6].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+			expect(tokens[7].type).toMatch(ValidToken.CONSTRUCTOR);
+			expect(tokens[8].type).toMatch(ValidToken.OPEN_PAREN);
+			expect(tokens[9].type).toMatch(ValidToken.CLOSE_PAREN);
+			expect(tokens[10].type).toMatch(ValidToken.OPEN_CURLY_BRACE);
+			expect(tokens[11].type).toMatch(ValidToken.LET);
+			expect(tokens[12].type).toMatch(ValidToken.IDENTIFIER);
+			expect(tokens[12].value).toMatch('invalidNum');
+			expect(tokens[13].type).toMatch(ValidToken.ASSIGNMENT);
+			expect(tokens[14].type).toMatch(ValidToken.NON_VALID_TOKEN);
+			expect(tokens[15].type).toMatch(ValidToken.SEMICOLON);
+			expect(tokens[16].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+			expect(tokens[17].type).toMatch(ValidToken.CLOSE_CURLY_BRACE);
+		});
+	});
 });
 
 const expectNumericLiteral = (lexer: Lexer, input: string, expectedTokenType: ValidToken, expectedTokenValue: string) => {
@@ -1903,9 +1951,17 @@ const expectNumericLiteral = (lexer: Lexer, input: string, expectedTokenType: Va
 	expect(token.value).toMatch(expectedTokenValue);
 };
 
-const expectLexerToThrow = (lexer: Lexer, input: string) => {
+const expectInvalidToken = (lexer: Lexer, input: string, code: Errors, line = 1) => {
 	lexer.reset(input);
-	expect(() => lexer.nextToken()).toThrow();
+
+	const token = lexer.nextToken();
+
+	expect(token.type).toMatch(ValidToken.NON_VALID_TOKEN);
+
+	const error = lexer.errors.get(line);
+
+	expect(error).toBeDefined();
+	expect(error).toBe(code);
 };
 
 const getTokens = (lexer: Lexer) => {

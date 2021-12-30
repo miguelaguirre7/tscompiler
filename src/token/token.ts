@@ -2,9 +2,9 @@ import ValidToken from './valid_token';
 
 export default class Token {
 	private readonly _type: ValidToken;
-	private readonly _value?: string;
+	private readonly _value?: string | null;
 
-	constructor(type: ValidToken, value?: string) {
+	constructor(type: ValidToken, value?: string | null) {
 		this._type = type;
 		this._value = value;
 	}

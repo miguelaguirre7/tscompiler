@@ -1,5 +1,7 @@
 import { Token, ValidToken } from '../token';
 import regex from '../util/regex';
+import logError, { ErrorCodes, Errors } from '../error';
+import { ContextualKeywords, Punctuator, ReservedWord } from '../types';
 import punctuators from './punctuators';
 import reservedWords from './reserved_words';
 
@@ -7,6 +9,8 @@ export default class Lexer {
 	private _input: string;
 	private currentChar: string;
 	private currentIndex: number;
+	private _currentLine: number;
+	private readonly _errors: Map<number, ErrorCodes>;
 	/* eslint-disable-next-line  @typescript-eslint/class-literal-property-style, @typescript-eslint/naming-convention */
 	private readonly MAX_UNICODE_ESCAPE_VALUE = 0x10_FF_FF;
 	private readonly _eofToken: Token;
@@ -16,6 +20,8 @@ export default class Lexer {
 		this.currentIndex = 0;
 		this.currentChar = this._input[this.currentIndex];
 		this._eofToken = new Token(ValidToken.EOF);
+		this._currentLine = 1;
+		this._errors = new Map();
 	}
 
 	get input() {
@@ -28,6 +34,14 @@ export default class Lexer {
 
 	get eofToken() {
 		return this._eofToken;
+	}
+
+	get currentLine() {
+		return this._currentLine;
+	}
+
+	get errors() {
+		return this._errors;
 	}
 
 	/**
@@ -43,6 +57,8 @@ export default class Lexer {
 
 		this.currentIndex = 0;
 		this.currentChar = this._input[0];
+		this._currentLine = 1;
+		this._errors.clear();
 	}
 
 	/**
@@ -52,6 +68,7 @@ export default class Lexer {
 	nextToken(): Token {
 		while (this.currentChar) {
 			if (regex.ws.test(this.currentChar)) {
+				if (this.currentChar === '\n') this._currentLine += 1;
 				this.advance();
 				continue;
 			} else if (regex.commentStart.test(this.currentChar)) {
@@ -59,9 +76,11 @@ export default class Lexer {
 			} else if (regex.operators.test(this.currentChar)) {
 				return this.punctuator();
 			} else if (regex.numericLiteral.test(this.currentChar)) {
-				return new Token(ValidToken.NUMERIC_LITERAL, this.numericLiteral());
+				const number_ = this.numericLiteral();
+				return this.isToken(number_) ? number_ : new Token(ValidToken.NUMERIC_LITERAL, number_);
 			} else if (regex.string.test(this.currentChar)) {
-				return new Token(ValidToken.STRING_LITERAL, this.string());
+				const string_ = this.string();
+				return this.isToken(string_) ? string_ : new Token(ValidToken.STRING_LITERAL, string_);
 			} else if (regex.identifierStart.test(this.currentChar)) {
 				return this.word();
 			} else {
@@ -106,7 +125,7 @@ export default class Lexer {
 					}
 
 					default: {
-						throw new SyntaxError('Invalid token');
+						this.error(Errors.Unexpected_Token);
 					}
 				}
 			}
@@ -124,18 +143,35 @@ export default class Lexer {
 		return this.input[this.currentIndex + 1];
 	}
 
+	private skip(condition: (current: string) => boolean) {
+		while (condition(this.currentChar)) this.advance();
+	}
+
+	private previousCharacter() {
+		return this.input[this.currentIndex - 1];
+	}
+
 	private numericLiteral() {
 		let number = '';
-		let floatingPointCount = 0;
 
 		while (regex.numericLiteral.test(this.currentChar)) {
 			if (regex.decimalDigit.test(this.currentChar)) {
-				number += this.decimalIntegerLiteral();
-			} else if (regex.dot.test(this.currentChar)) {
-				if (floatingPointCount > 0) throw new Error('Invalid number literal');
+				const restOfNumber = this.decimalIntegerLiteral();
+				if (this.isToken(restOfNumber)) return restOfNumber;
 
-				floatingPointCount++;
-				number += this.decimalDigitsSep();
+				number += restOfNumber;
+			} else if (regex.dot.test(this.currentChar)) {
+				number += this.currentChar;
+				this.advance();
+
+				// Trailing point
+				if (this.currentChar === undefined) break;
+
+				const restOfDecimal = this.decimalDigitsSep();
+				if (this.isToken(restOfDecimal)) return restOfDecimal;
+
+				number += restOfDecimal;
+				break;
 			}
 		}
 
@@ -147,8 +183,10 @@ export default class Lexer {
 
 		if (this.currentChar === '0') {
 			this.advance();
-			if (regex.decimalDigit.test(this.currentChar) || regex.numericLiteralSeparator.test(this.currentChar)) {
-				throw new Error('Invalid Octal literal');
+
+			if (regex.decimalDigitsSep.test(this.currentChar)) {
+				this.skipRestOfNumber();
+				return this.error(Errors.Octal_literals_not_supported);
 			}
 
 			return '0';
@@ -157,20 +195,29 @@ export default class Lexer {
 		if (regex.nonZeroDigit.test(this.currentChar)) {
 			this.advance();
 
-			if (regex.decimalDigit.test(this.currentChar) || regex.numericLiteralSeparator.test(this.currentChar)) {
+			if (regex.decimalDigitsSep.test(this.currentChar)) {
 				decimal += this.currentChar;
 				this.advance();
+
+				if (this.multipleNumericSeparators()) {
+					this.skipRestOfNumber();
+					return this.error(Errors.Multiple_numeric_separators_not_allowed);
+				}
+
+				if (regex.numericLiteralSeparator.test(this.previousCharacter()) && regex.dot.test(this.currentChar)) {
+					this.skip(current => regex.decimalDigitsSep.test(current) || regex.dot.test(current));
+					return this.error(Errors.Numeric_separator_not_allowed);
+				}
 
 				if (regex.numericLiteralSeparator.test(this.currentChar)) {
 					decimal += this.currentChar;
 					this.advance();
-
-					if (!regex.decimalDigit.test(this.currentChar)) {
-						throw new Error('Numeric separators are not allowed here');
-					}
 				}
 
-				decimal += this.decimalDigitsSep();
+				const rest = this.decimalDigitsSep();
+				if (this.isToken(rest)) return rest;
+
+				decimal += rest;
 			}
 		}
 
@@ -179,20 +226,33 @@ export default class Lexer {
 
 	private decimalDigitsSep() {
 		let digits = this.currentChar;
-		this.advance();
 
 		if (regex.numericLiteralSeparator.test(this.currentChar)) {
-			throw new Error('Numeric separators are not allowed here');
+			return this.error(this.multipleNumericSeparators() ? Errors.Multiple_numeric_separators_not_allowed : Errors.Numeric_separator_not_allowed);
 		}
 
-		while (regex.decimalDigit.test(this.currentChar) || regex.numericLiteralSeparator.test(this.currentChar)) {
+		this.advance();
+
+		while (regex.decimalDigitsSep.test(this.currentChar)) {
+			if (this.multipleNumericSeparators()) {
+				return this.error(Errors.Multiple_numeric_separators_not_allowed);
+			}
+
 			digits += this.currentChar;
 			this.advance();
 		}
 
-		if (digits.endsWith('_')) throw new Error('Numeric separators are not allowed here');
+		if (digits.endsWith('_')) return this.error(Errors.Numeric_separator_not_allowed);
 
 		return digits;
+	}
+
+	private multipleNumericSeparators() {
+		return regex.numericLiteralSeparator.test(this.previousCharacter()) && regex.numericLiteralSeparator.test(this.currentChar);
+	}
+
+	private skipRestOfNumber() {
+		this.skip(current => regex.decimalDigitsSep.test(current));
 	}
 
 	private comment() {
@@ -235,7 +295,7 @@ export default class Lexer {
 		}
 
 		if (this.currentChar === undefined) {
-			throw new Error('*/ expected.');
+			return this.error(Errors.Unterminated_comment);
 		}
 
 		this.advance();
@@ -246,8 +306,10 @@ export default class Lexer {
 	private punctuator() {
 		const nextChar = this.peek();
 
-		if ((regex.signedInteger.test(this.currentChar) || regex.dot.test(this.currentChar)) && regex.decimalDigit.test(nextChar))
-			return new Token(ValidToken.NUMERIC_LITERAL, this.decimalDigitsSep());
+		if ((regex.signedInteger.test(this.currentChar) || regex.dot.test(this.currentChar)) && regex.decimalDigit.test(nextChar)) {
+			const number = this.decimalDigitsSep();
+			return typeof (number) === 'string' ? new Token(ValidToken.NUMERIC_LITERAL, number) : number;
+		}
 
 		// Grab the next 4 characters in the input, which is the length of the longest punctuator
 		const punctuator = this.input.slice(this.currentIndex, this.currentIndex + 4) as Punctuator;
@@ -261,7 +323,7 @@ export default class Lexer {
 			}
 		}
 
-		throw new Error('Invalid punctuator');
+		return this.error(Errors.Unsupported_punctuator);
 	}
 
 	private word() {
@@ -289,7 +351,10 @@ export default class Lexer {
 
 		while (this.currentChar !== undefined && (regex.singleEscapeFormattingCharacters.test(this.currentChar) || stringCharacterRegex.test(this.currentChar))) {
 			if (regex.escapeSequence.test(this.currentChar)) {
-				string += this.escapeSequence();
+				const escapeSeq = this.escapeSequence();
+				if (this.isToken(escapeSeq)) return escapeSeq;
+
+				string += escapeSeq;
 
 				// Prevent the loop from breaking when a escaped quote is found
 				if (this.currentChar === quote) {
@@ -307,7 +372,7 @@ export default class Lexer {
 		}
 
 		if (this.currentChar !== quote) {
-			throw new Error('Unterminated string literal');
+			return this.error(Errors.Unterminated_string_literal);
 		}
 
 		this.advance();
@@ -322,7 +387,10 @@ export default class Lexer {
 		if (regex.singleEscapeNonFormattingCharacters.test(this.currentChar) || regex.nonEscapeCharacter.test(this.currentChar)) {
 			sequence += this.currentChar;
 		} else if (regex.unicodeEscapeSequence.test(this.currentChar)) {
-			sequence += this.unicodeSequence();
+			const unicodeSeq = this.unicodeSequence();
+			if (this.isToken(unicodeSeq)) return unicodeSeq;
+
+			sequence += unicodeSeq;
 		}
 
 		return sequence;
@@ -333,7 +401,7 @@ export default class Lexer {
 		this.advance();
 
 		if (this.currentChar !== '{') {
-			throw new Error('Hexadecimal digit expected');
+			return this.error(Errors.Hexadecimal_digit_expected);
 		}
 
 		uSequence += this.currentChar;
@@ -348,20 +416,31 @@ export default class Lexer {
 		}
 
 		if (this.currentChar === '{') {
-			throw new Error('Hexadecimal digit expected');
+			return this.error(Errors.Hexadecimal_digit_expected);
 		}
 
 		if (this.currentChar !== '}') {
-			throw new Error('Unterminated unicode sequence');
+			return this.error(Errors.Unterminated_unicode_escape_sequence);
 		}
 
 		const parsedValue = Number.parseInt(unicodeValue, 16);
 		if (parsedValue < 0 || parsedValue > this.MAX_UNICODE_ESCAPE_VALUE) {
-			throw new Error('An extended Unicode escape value must be between 0x00 and 0x10FFFF inclusive.');
+			return this.error(Errors.Unicode_value_out_of_range);
 		}
 
 		uSequence += this.currentChar;
 
 		return uSequence;
+	}
+
+	private error(code: ErrorCodes) {
+		logError('placeholder.ts', code, this._currentLine);
+
+		this._errors.set(this._currentLine, code);
+		return new Token(ValidToken.NON_VALID_TOKEN);
+	}
+
+	private isToken(token: string | Token): token is Token {
+		return typeof token !== 'string';
 	}
 }

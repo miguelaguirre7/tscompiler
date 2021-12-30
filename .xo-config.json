@@ -33,6 +33,10 @@
       {
         "case": "snakeCase"
       }
+    ],
+    "node/prefer-global/process": [
+      "error",
+      "always"
     ]
   }
 }
